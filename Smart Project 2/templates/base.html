@@ -1,0 +1,72 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Smart UML{% endblock %} · Smart UML</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% include "components/_icons.html" %}
+
+  {% block shell %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a href="{% url 'project:list' %}" class="brand">
+        <span class="brand-mark">{% include "components/_icon.html" with name="logo" %}</span>
+        <span class="brand-name">Smart UML</span>
+      </a>
+
+      <a href="{% url 'project:create' %}" class="btn btn-primary btn-block sidebar-cta">
+        {% include "components/_icon.html" with name="plus" %} New project
+      </a>
+
+      <nav class="nav">
+        <p class="nav-title">Workspace</p>
+        {% url 'project:list' as list_url %}
+        <a href="{{ list_url }}" class="nav-link{% if request.path == list_url %} active{% endif %}">
+          {% include "components/_icon.html" with name="grid" %} Dashboard
+        </a>
+      </nav>
+
+      {% if sidebar_projects %}
+      <nav class="nav">
+        <p class="nav-title">Recent projects</p>
+        {% for p in sidebar_projects %}
+          {% url 'project:details' p.pk as p_url %}
+          <a href="{{ p_url }}" class="nav-link{% if request.path == p_url or sidebar_active_project == p.pk %} active{% endif %}" title="{{ p.title }}">
+            {% include "components/_icon.html" with name="layers" %} <span class="nav-text">{{ p.title }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+
+      <div class="sidebar-footer">
+        <span class="sidebar-note">{% include "components/_icon.html" with name="lock" %} Local workspace</span>
+        <a href="{% url 'admin:index' %}" class="icon-btn" title="Django administration" aria-label="Administration">{% include "components/_icon.html" with name="layers" %}</a>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="mobile-bar">
+        <button type="button" class="icon-btn" data-toggle-sidebar aria-label="Menu">{% include "components/_icon.html" with name="grid" %}</button>
+        <span class="brand-name">Smart UML</span>
+      </header>
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% endblock %}
+
+  {% include "components/_toasts.html" %}
+  {% include "components/_confirm_modal.html" %}
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

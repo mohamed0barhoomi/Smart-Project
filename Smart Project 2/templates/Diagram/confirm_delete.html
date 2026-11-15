@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Delete diagram{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="panel panel-center">
+    <div class="modal-icon danger">{% include "components/_icon.html" with name="alert" %}</div>
+    <h1>Delete “{{ diagram.title }}”?</h1>
+    <p class="muted">This diagram, its {{ diagram.elements|length }} element{{ diagram.elements|length|pluralize }} and {{ diagram.relationships|length }} relationship{{ diagram.relationships|length|pluralize }} will be permanently deleted. This cannot be undone.</p>
+    <form method="post" class="form-actions center">
+      {% csrf_token %}
+      <a href="{% url 'project:details' project.pk %}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-danger">{% include "components/_icon.html" with name="trash" %} Delete diagram</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

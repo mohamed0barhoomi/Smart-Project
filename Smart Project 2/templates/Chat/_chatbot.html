@@ -1,0 +1,67 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+
+<section class="chatbot panel" id="chatbot">
+  <div class="chatbot-head">
+    <span class="chatbot-avatar">{% include "components/_icon.html" with name="spark" %}</span>
+    <div>
+      <h2 class="section-title">UML assistant</h2>
+      <p class="muted small">Talk with the assistant about your system first: it asks the right questions. Then generate the diagram — and its functional and non-functional requirements — from the conversation.</p>
+    </div>
+    <span class="badge {% if claude_ready %}badge-class{% else %}badge-shared{% endif %} chatbot-engine">{% if claude_ready %}{{ generator_model }}{% else %}Offline analyzer{% endif %}</span>
+    {% if chat.chat_messages %}
+      <form method="post" action="#" class="chat-reset">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm" title="Delete this conversation and start again">{% include "components/_icon.html" with name="plus" %} New conversation</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {# ---------- conversation ---------- #}
+  <ol class="chat-thread chat-conversation" id="chat-thread">
+    <li class="chat-msg chat-bot">
+      <span class="chat-bot-icon">{% include "components/_icon.html" with name="spark" %}</span>
+      <div><div class="chat-text"><p>Hello! Describe the system you want to design: what is it for, who will use it and what must they be able to do? I will ask you a few questions, then you can generate the diagram.</p></div></div>
+    </li>
+    {% include "Chat/_messages.html" with chat_messages=chat.chat_messages %}
+    <li class="chat-msg chat-bot chat-typing" id="chat-typing" hidden>
+      <span class="chat-bot-icon">{% include "components/_icon.html" with name="spark" %}</span>
+      <div><span class="dots"><i></i><i></i><i></i></span></div>
+    </li>
+  </ol>
+
+  <form method="post" action="#" class="chat-composer chat-send" id="chat-send-form">
+    {% csrf_token %}
+    <textarea name="content" id="chat-input" rows="2" maxlength="4000" required
+              placeholder="Write your message… (Enter to send, Shift+Enter for a new line)"></textarea>
+    <div class="chat-footer">
+      <div class="chips" aria-label="Examples">
+        <button type="button" class="chip" data-example="I want to develop a library management system where administrators manage books, clients can borrow books, and librarians manage borrowing operations.">Library</button>
+        <button type="button" class="chip" data-example="An online shop where customers browse products, place orders and pay online. An order contains several products. Administrators manage products and categories.">Online shop</button>
+        <button type="button" class="chip" data-example="A hotel booking platform: guests search rooms and make reservations, receptionists check guests in and out, and managers manage rooms and prices. Guests must log in before booking.">Hotel</button>
+      </div>
+      <button type="submit" class="btn btn-secondary" id="chat-send">{% include "components/_icon.html" with name="share" %} Send</button>
+    </div>
+  </form>
+
+  {# ---------- generation from the conversation (existing UML chatbot endpoint) ---------- #}
+  <form method="post" action="#" class="chat-generate" id="chat-form">
+    {% csrf_token %}
+    <input type="hidden" name="description" id="chat-description" value="">
+    <span class="chat-generate-label">{% include "components/_icon.html" with name="spark" %} Ready?</span>
+    <div class="segmented" role="radiogroup" aria-label="Diagram type to generate">
+      {% for radio in generate_form.diagram_type %}
+        <label>{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary" id="chat-submit"{% if not chat.has_user_message %} disabled title="Talk with the assistant first"{% endif %}>
+      {% include "components/_icon.html" with name="spark" %} Generate diagram
+    </button>
+  </form>
+
+  <div class="chat-loading" id="chat-loading" hidden>
+    <span class="spinner"></span>
+    <div><strong>Generating from the conversation…</strong><p class="muted small">Identifying the elements and relationships, laying out the diagram and writing the requirements.</p></div>
+  </div>
+</section>
+<script src="{% static 'js/chat.js' %}"></script>

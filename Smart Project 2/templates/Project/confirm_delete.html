@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Delete project{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="panel panel-center">
+    <div class="modal-icon danger">{% include "components/_icon.html" with name="alert" %}</div>
+    <h1>Delete “{{ project.title }}”?</h1>
+    <p class="muted">The project and its {{ project.diagram_count }} diagram{{ project.diagram_count|pluralize }} (with all their elements and relationships) will be permanently deleted. This cannot be undone.</p>
+    <form method="post" class="form-actions center">
+      {% csrf_token %}
+      <a href="{% url 'project:details' project.pk %}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-danger">{% include "components/_icon.html" with name="trash" %} Delete project</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

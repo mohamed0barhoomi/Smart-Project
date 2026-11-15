@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ diagram.title }}{% endblock %}
+{% block body_class %}editor-page{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/editor.css' %}">{% endblock %}
+
+{% block shell %}
+<div class="editor{% if not editor_config.canEdit %} is-readonly{% endif %}" id="editor" data-type="{{ diagram.diagram_type }}">
+
+  {# ================= top bar ================= #}
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="{% url 'project:details' project.pk %}" class="brand-mark topbar-logo" title="Back to {{ project.title }}" aria-label="Back to the project">{% include "components/_icon.html" with name="logo" %}</a>
+      <div class="title-block">
+        <input type="text" id="diagram-title" class="title-input" value="{{ diagram.title }}" maxlength="120"
+               aria-label="Diagram title" {% if not editor_config.canEdit %}readonly{% endif %}>
+        <div class="title-meta">
+          <a href="{% url 'project:details' project.pk %}" class="title-project" title="Open the project">{{ project.title }}</a>
+          <span class="badge badge-{{ diagram.diagram_type }}">{{ diagram.get_diagram_type_display }}</span>
+          {% if diagram.source == "ai" %}<span class="badge badge-ai" title="{{ diagram.prompt|truncatechars:300 }}">{% include "components/_icon.html" with name="spark" %} Generated</span>{% endif %}
+          {% if not editor_config.canEdit %}<span class="badge">{% include "components/_icon.html" with name="lock" %} View only</span>{% endif %}
+          <span class="save-status" id="save-status" data-state="saved">
+            <span class="dot"></span><span class="label">Saved</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      {% if editor_config.canEdit %}
+      <div class="tool-group">
+        <button type="button" class="icon-btn" id="btn-undo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>{% include "components/_icon.html" with name="undo" %}</button>
+        <button type="button" class="icon-btn" id="btn-redo" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>{% include "components/_icon.html" with name="redo" %}</button>
+      </div>
+      <span class="divider"></span>
+      {% endif %}
+      <div class="tool-group">
+        <button type="button" class="icon-btn" id="btn-zoom-out" title="Zoom out (-)" aria-label="Zoom out">{% include "components/_icon.html" with name="zoom-out" %}</button>
+        <button type="button" class="zoom-value" id="btn-zoom-reset" title="Reset zoom (0)">100%</button>
+        <button type="button" class="icon-btn" id="btn-zoom-in" title="Zoom in (+)" aria-label="Zoom in">{% include "components/_icon.html" with name="zoom-in" %}</button>
+        <button type="button" class="icon-btn" id="btn-fit" title="Fit to screen (F)" aria-label="Fit to screen">{% include "components/_icon.html" with name="fit" %}</button>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      {% if editor_config.canEdit %}
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-save" title="Save (Ctrl+S)">{% include "components/_icon.html" with name="save" %} Save</button>
+      {% endif %}
+      <div class="dropdown">
+        <button type="button" class="btn btn-primary btn-sm" data-dropdown>{% include "components/_icon.html" with name="download" %} Export</button>
+        <div class="menu" role="menu">
+          <p class="menu-label">Export as</p>
+          <button type="button" role="menuitem" data-export="svg">{% include "components/_icon.html" with name="code" %} SVG vector</button>
+          <button type="button" role="menuitem" data-export="png">{% include "components/_icon.html" with name="image" %} PNG image</button>
+          <button type="button" role="menuitem" data-export="json">{% include "components/_icon.html" with name="file" %} JSON data</button>
+        </div>
+      </div>
+      <div class="dropdown">
+        <button type="button" class="icon-btn" data-dropdown title="More actions" aria-label="More actions">{% include "components/_icon.html" with name="more-h" %}</button>
+        <div class="menu" role="menu">
+          <a href="{% url 'project:diagram_update' project.pk diagram.diagram_type %}?next={{ request.path|urlencode }}" role="menuitem">{% include "components/_icon.html" with name="pencil" %} Rename / edit description</a>
+          <button type="button" role="menuitem" id="btn-toggle-panel">{% include "components/_icon.html" with name="panel" %} Toggle properties panel</button>
+          <button type="button" role="menuitem" id="btn-shortcuts">{% include "components/_icon.html" with name="keyboard" %} Keyboard shortcuts <kbd>?</kbd></button>
+          <a href="{% url 'project:details' project.pk %}" role="menuitem">{% include "components/_icon.html" with name="layers" %} Back to project</a>
+          <a href="{% url 'project:list' %}" role="menuitem">{% include "components/_icon.html" with name="grid" %} Dashboard</a>
+          {% if editor_config.canDelete %}
+          <div class="menu-sep"></div>
+          <button type="button" role="menuitem" class="danger" id="btn-delete-diagram">{% include "components/_icon.html" with name="trash" %} Delete diagram</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {# ================= left: toolbox ================= #}
+  <aside class="toolbox" id="toolbox" aria-label="UML toolbox">
+    <div class="tool-section">
+      <p class="tool-title">Tools</p>
+      <button type="button" class="tool active" data-tool="select" title="Select & move (V)">
+        {% include "components/_icon.html" with name="pointer" %}<span>Select</span><kbd>V</kbd>
+      </button>
+      <button type="button" class="tool" data-tool="pan" title="Pan the canvas (H, or Space + drag)">
+        {% include "components/_icon.html" with name="hand" %}<span>Pan</span><kbd>H</kbd>
+      </button>
+    </div>
+
+    {% if editor_config.canEdit %}
+    <div class="tool-section">
+      <p class="tool-title">Elements</p>
+      {% for kind, label, key in toolbox_elements %}
+        <button type="button" class="tool" data-tool="add:{{ kind }}" draggable="true"
+                title="{{ label }} ({{ key }}) — click then click the canvas, or drag it onto the canvas">
+          {% include "components/_icon.html" with name=kind %}<span>{{ label }}</span><kbd>{{ key }}</kbd>
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="tool-section">
+      <p class="tool-title">Relationships</p>
+      {% for rel, label, key in toolbox_relationships %}
+        <button type="button" class="tool" data-tool="connect:{{ rel }}"
+                title="{{ label }} ({{ key }}) — click the source, then the target">
+          {% with icon_name="rel-"|add:rel %}{% include "components/_icon.html" with name=icon_name %}{% endwith %}<span>{{ label }}</span><kbd>{{ key }}</kbd>
+        </button>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tool-section">
+      <p class="readonly-note">{% include "components/_icon.html" with name="lock" %} You have view-only access to this diagram.</p>
+    </div>
+    {% endif %}
+  </aside>
+
+  {# ================= center: canvas ================= #}
+  <main class="canvas-wrap" id="canvas-wrap">
+    <svg id="canvas" class="canvas" xmlns="http://www.w3.org/2000/svg" tabindex="0" aria-label="Diagram canvas">
+      <defs id="canvas-defs"></defs>
+      <g id="viewport">
+        <g id="layer-containers"></g>
+        <g id="layer-relationships"></g>
+        <g id="layer-elements"></g>
+        <g id="layer-overlay"></g>
+      </g>
+    </svg>
+
+    <div class="canvas-empty" id="canvas-empty" hidden>
+      <div class="empty-icon">{% include "components/_icon.html" with name="layers" %}</div>
+      <h3>Start your {{ diagram.get_diagram_type_display|lower }}</h3>
+      <p class="muted">{% if editor_config.canEdit %}Drag an element from the toolbox, or pick one and click on the canvas.{% else %}This diagram is empty.{% endif %}</p>
+    </div>
+
+    <div class="canvas-hint" id="canvas-hint" hidden></div>
+    <div class="canvas-loading" id="canvas-loading"><span class="spinner"></span></div>
+  </main>
+
+  {# ================= right: properties ================= #}
+  <aside class="properties" id="properties" aria-label="Properties"></aside>
+</div>
+
+{# keyboard shortcuts dialog #}
+<div class="modal" id="shortcuts-modal" hidden role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" style="max-width:560px">
+    <div class="modal-head">
+      <h3 id="shortcuts-title">Keyboard shortcuts</h3>
+      <button type="button" class="icon-btn icon-btn-sm" data-close aria-label="Close">{% include "components/_icon.html" with name="x" %}</button>
+    </div>
+    <ul class="shortcut-list">
+      <li>Select tool <kbd>V</kbd></li>
+      <li>Pan tool <kbd>H</kbd> / <kbd>Space</kbd></li>
+      {% for kind, label, key in toolbox_elements %}<li>{{ label }} <kbd>{{ key }}</kbd></li>{% endfor %}
+      {% for rel, label, key in toolbox_relationships %}<li>{{ label }} <kbd>{{ key }}</kbd></li>{% endfor %}
+      <li>Undo <kbd>Ctrl Z</kbd></li>
+      <li>Redo <kbd>Ctrl Y</kbd></li>
+      <li>Save <kbd>Ctrl S</kbd></li>
+      <li>Duplicate <kbd>Ctrl D</kbd></li>
+      <li>Delete selection <kbd>Del</kbd></li>
+      <li>Move selection <kbd>Arrows</kbd></li>
+      <li>Zoom in / out <kbd>+</kbd> <kbd>-</kbd></li>
+      <li>Reset zoom / fit <kbd>0</kbd> <kbd>F</kbd></li>
+      <li>Cancel / deselect <kbd>Esc</kbd></li>
+      <li>Zoom with mouse <kbd>Ctrl Wheel</kbd></li>
+    </ul>
+  </div>
+</div>
+
+{{ diagram_data|json_script:"diagram-data" }}
+{{ editor_config|json_script:"editor-config" }}
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{% static 'js/editor/main.js' %}"></script>
+{% endblock %}

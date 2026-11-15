@@ -1,0 +1,24 @@
+{% if preview.empty %}
+  <div class="preview-empty">
+    {% if diagram.diagram_type == "class" %}{% include "components/_icon.html" with name="class" %}{% else %}{% include "components/_icon.html" with name="usecase" %}{% endif %}
+    <span>Empty diagram</span>
+  </div>
+{% else %}
+  <svg class="preview-svg" viewBox="{{ preview.viewbox }}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    {% for l in preview.lines %}
+      <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="pv-line"{% if l.dashed %} stroke-dasharray="8 6"{% endif %}/>
+    {% endfor %}
+    {% for s in preview.shapes %}
+      {% if s.kind == "usecase" %}
+        <ellipse cx="{{ s.cx }}" cy="{{ s.cy }}" rx="{{ s.rx }}" ry="{{ s.ry }}" class="pv-shape"/>
+      {% elif s.kind == "actor" %}
+        <g class="pv-actor"><circle cx="{{ s.cx }}" cy="{{ s.head_cy }}" r="12"/><line x1="{{ s.cx }}" y1="{{ s.body1 }}" x2="{{ s.cx }}" y2="{{ s.body2 }}"/></g>
+      {% elif s.kind == "system" %}
+        <rect x="{{ s.x }}" y="{{ s.y }}" width="{{ s.w }}" height="{{ s.h }}" rx="6" class="pv-system"/>
+      {% else %}
+        <rect x="{{ s.x }}" y="{{ s.y }}" width="{{ s.w }}" height="{{ s.h }}" rx="4" class="pv-shape"/>
+        <line x1="{{ s.x }}" y1="{{ s.header }}" x2="{{ s.x2 }}" y2="{{ s.header }}" class="pv-sep"/>
+      {% endif %}
+    {% endfor %}
+  </svg>
+{% endif %}

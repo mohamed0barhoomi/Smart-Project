@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{% if requirement %}Edit {{ requirement.code }}{% else %}New requirement{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+  <a href="{% url 'project:list' %}">Projects</a><span>/</span>
+  <a href="{% url 'project:details' project.pk %}#requirements">{{ project.title }}</a><span>/</span>
+  <span>{% if requirement %}{{ requirement.code }}{% else %}New requirement{% endif %}</span>
+</nav>
+
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head">
+      <h1>{% if requirement %}Edit {{ requirement.code }}{% else %}New {{ req_type_label|lower }} requirement{% endif %}</h1>
+      <p class="muted">
+        {% if req_type == "functional" %}A functional requirement describes <strong>what</strong> the system must do.
+        {% else %}A non-functional requirement describes <strong>how</strong> the system must operate (quality constraint).{% endif %}
+        {% if requirement.source == "ai" %}Once edited, this generated requirement is kept when you regenerate.{% endif %}
+      </p>
+    </div>
+
+    <form method="post" class="stack" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="req_type" value="{{ req_type }}">
+      {% if form.non_field_errors %}<div class="alert alert-error">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+      {% include "components/_field.html" with field=form.title %}
+      {% include "components/_field.html" with field=form.description %}
+      {% if req_type == "functional" %}
+        <div class="form-row">
+          {% include "components/_field.html" with field=form.actor %}
+          {% include "components/_field.html" with field=form.module %}
+        </div>
+        {% include "components/_field.html" with field=form.priority %}
+      {% else %}
+        <div class="form-row">
+          {% include "components/_field.html" with field=form.category %}
+          {% include "components/_field.html" with field=form.priority %}
+        </div>
+      {% endif %}
+      {% include "components/_field.html" with field=form.acceptance_criteria %}
+      {% if req_type != "functional" %}
+        <label class="check">{{ form.needs_confirmation }} {{ form.needs_confirmation.label }}</label>
+      {% endif %}
+      <div class="form-actions">
+        <a href="{% url 'project:details' project.pk %}?req={{ req_type }}#requirements" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">{% if requirement %}Save changes{% else %}Add requirement{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

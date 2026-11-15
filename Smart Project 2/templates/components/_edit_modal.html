@@ -1,0 +1,28 @@
+{% comment %}
+  Shared edit dialog (projects and diagrams). app.js fills it from the button's data-rename-* attributes:
+  data-rename-url, data-rename-heading, data-rename-field ("name" or "title"), data-title, data-description
+{% endcomment %}
+<div class="modal" id="rename-modal" hidden role="dialog" aria-modal="true" aria-labelledby="rename-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="rename-title">Edit</h3>
+      <button type="button" class="icon-btn icon-btn-sm" data-close aria-label="Close">{% include "components/_icon.html" with name="x" %}</button>
+    </div>
+    <form method="post" id="rename-form" class="stack">
+      {% csrf_token %}
+      <div class="field">
+        <label for="rename-input-title" id="rename-label">Name</label>
+        <input type="text" id="rename-input-title" name="name" maxlength="120" minlength="2" required>
+      </div>
+      <div class="field">
+        <label for="rename-input-description">Description <span class="muted">(optional)</span></label>
+        <textarea id="rename-input-description" name="description" rows="3" maxlength="2000"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>

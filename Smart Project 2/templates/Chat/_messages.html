@@ -1,0 +1,16 @@
+{% for m in chat_messages %}
+  {% if m.role == "user" %}
+    <li class="chat-msg chat-user"><p>{{ m.content|linebreaksbr }}</p></li>
+  {% else %}
+    <li class="chat-msg chat-bot{% if m.diagram_id %} chat-note{% endif %}">
+      <span class="chat-bot-icon">{% include "components/_icon.html" with name="spark" %}</span>
+      <div>
+        <div class="chat-text">{{ m.content|linebreaks }}</div>
+        {% if m.diagram_id %}
+          <a class="btn btn-secondary btn-sm chat-open" href="{% url 'project:details' project.pk %}">{% include "components/_icon.html" with name="open" %} Open the diagram</a>
+        {% endif %}
+        <p class="chat-engine">{% if m.engine == "local" %}offline analyzer{% elif m.engine %}{{ m.engine }}{% endif %}</p>
+      </div>
+    </li>
+  {% endif %}
+{% endfor %}

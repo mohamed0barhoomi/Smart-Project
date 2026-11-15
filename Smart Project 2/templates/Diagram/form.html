@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{% if diagram %}Edit diagram{% else %}New diagram{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+  <a href="{% url 'project:list' %}">Projects</a>
+  <span>/</span>
+  <a href="{% url 'project:details' project.pk %}">{{ project.title }}</a>
+  <span>/</span>
+  {% if diagram %}<span>{{ diagram.title }}</span><span>/</span><span>Rename</span>{% else %}<span>New diagram</span>{% endif %}
+</nav>
+
+<div class="form-page">
+  <div class="panel">
+    <div class="panel-head">
+      <h1>{% if diagram %}Edit diagram{% else %}Create a new diagram{% endif %}</h1>
+      <p class="muted">{% if diagram %}Rename the diagram or update its description.{% else %}Give your diagram a name and choose its type. The editor opens right after.{% endif %}</p>
+    </div>
+
+    <form method="post" class="stack" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+      {% endif %}
+      {% include "components/_field.html" with field=form.title %}
+      {% include "components/_field.html" with field=form.description %}
+
+      {% if form.diagram_type %}
+        <div class="field{% if form.diagram_type.errors %} has-error{% endif %}">
+          <label>Diagram type</label>
+          <div class="type-picker">
+            {% for radio in form.diagram_type %}
+              <label class="type-option">
+                {{ radio.tag }}
+                <span class="type-card">
+                  <span class="type-visual">
+                    {% if radio.data.value == "class" %}
+                      <svg viewBox="0 0 120 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="6" width="44" height="52" rx="3"/><path d="M6 20h44M6 38h44"/><rect x="72" y="14" width="42" height="36" rx="3"/><path d="M72 27h42M50 32h22"/></g></svg>
+                    {% else %}
+                      <svg viewBox="0 0 120 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="14" r="6"/><path d="M18 20v18M8 27h20M18 38l-7 12M18 38l7 12M30 30l34-10M30 34l34 10"/><ellipse cx="88" cy="18" rx="24" ry="10"/><ellipse cx="88" cy="46" rx="24" ry="10"/></g></svg>
+                    {% endif %}
+                  </span>
+                  <strong>{{ radio.choice_label }}</strong>
+                  <small class="muted">{% if radio.data.value == "class" %}Classes, interfaces, enumerations and their relationships.{% else %}Actors, use cases and include / extend relationships.{% endif %}</small>
+                  <span class="type-check">{% include "components/_icon.html" with name="check" %}</span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+          {% for error in form.diagram_type.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-actions">
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        <a href="{% url 'project:details' project.pk %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">{% if diagram %}Save changes{% else %}Create & open editor{% endif %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

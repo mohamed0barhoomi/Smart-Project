@@ -1,0 +1,14 @@
+{# One reusable confirmation dialog, driven by static/js/app.js (data-confirm attributes). #}
+<div class="modal" id="confirm-modal" hidden role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card modal-sm">
+    <div class="modal-icon danger">{% include "components/_icon.html" with name="alert" %}</div>
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-text" class="muted"></p>
+    <form method="post" id="confirm-form" class="modal-actions">
+      {% csrf_token %}
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-danger" id="confirm-submit">Delete</button>
+    </form>
+  </div>
+</div>

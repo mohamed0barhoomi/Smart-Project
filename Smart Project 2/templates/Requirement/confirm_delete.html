@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Delete {{ requirement.code }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="panel panel-center">
+    <div class="modal-icon danger">{% include "components/_icon.html" with name="alert" %}</div>
+    <h1>Delete {{ requirement.code }}?</h1>
+    <p class="muted">“{{ requirement.title }}” will be permanently deleted. This cannot be undone.</p>
+    <form method="post" class="form-actions center">
+      {% csrf_token %}
+      <a href="{% url 'project:details' project.pk %}?req={{ requirement.req_type }}#requirements" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-danger">{% include "components/_icon.html" with name="trash" %} Delete requirement</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

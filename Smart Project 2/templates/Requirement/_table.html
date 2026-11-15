@@ -1,0 +1,64 @@
+{% if items %}
+<div class="req-table-wrap">
+  <table class="req-table">
+    <thead>
+      <tr>
+        <th class="col-id">ID</th>
+        <th>Requirement</th>
+        <th class="col-who">{% if kind == "functional" %}Actor{% else %}Category{% endif %}</th>
+        <th class="col-priority">Priority</th>
+        <th class="col-criteria">Acceptance criteria</th>
+        <th class="col-actions"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in items %}
+        <tr>
+          <td class="col-id"><code>{{ r.code }}</code></td>
+          <td>
+            <p class="req-title">{{ r.title }}</p>
+            <p class="req-desc">{{ r.description }}</p>
+            <p class="req-tags">
+              {% if r.source == "manual" %}<span class="badge">Manual</span>
+              {% elif r.is_modified %}<span class="badge badge-class" title="Edited by you: kept when regenerating">Edited</span>
+              {% else %}<span class="badge badge-ai">{% include "components/_icon.html" with name="spark" %} Generated</span>{% endif %}
+              {% if kind == "functional" and r.module %}<span class="badge">{{ r.module }}</span>{% endif %}
+            </p>
+          </td>
+          <td class="col-who">{% if kind == "functional" %}{{ r.actor|default:"—" }}{% else %}{{ r.category_display }}{% endif %}</td>
+          <td class="col-priority">
+            <form method="post" action="{% url 'project:requirement_priority' project.pk r.code %}">
+              {% csrf_token %}
+              <select name="priority" class="priority-select priority-{{ r.priority }}" data-auto-submit aria-label="Priority of {{ r.code }}">
+                {% for value, label in req.priorities %}<option value="{{ value }}" {% if value == r.priority %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+            </form>
+          </td>
+          <td class="col-criteria">
+            {% if r.criteria_list %}
+              <ul>{% for c in r.criteria_list %}<li>{{ c }}</li>{% endfor %}</ul>
+            {% else %}<span class="muted">—</span>{% endif %}
+            {% if r.needs_confirmation %}<span class="badge badge-shared">To be confirmed</span>{% endif %}
+          </td>
+          <td class="col-actions">
+            <a href="{% url 'project:requirement_update' project.pk r.code %}" class="icon-btn icon-btn-sm" title="Edit {{ r.code }}" aria-label="Edit {{ r.code }}">{% include "components/_icon.html" with name="pencil" %}</a>
+            <button type="button" class="icon-btn icon-btn-sm danger-hover" title="Delete {{ r.code }}" aria-label="Delete {{ r.code }}"
+                    data-confirm-url="{% url 'project:requirement_delete' project.pk r.code %}"
+                    data-confirm-title="Delete {{ r.code }}?"
+                    data-confirm-text="“{{ r.title }}” will be permanently deleted.">
+              {% include "components/_icon.html" with name="trash" %}
+            </button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="empty-state req-empty">
+    <div class="empty-icon">{% include "components/_icon.html" with name="file" %}</div>
+    <h3>No {% if kind == "functional" %}functional{% else %}non-functional{% endif %} requirements yet</h3>
+    <p class="muted">Describe your system to the <a href="#chatbot">UML assistant</a>: it generates the requirements together with the diagram. You can also add one manually.</p>
+    <a href="{% url 'project:requirement_create' project.pk %}?type={{ kind }}" class="btn btn-secondary btn-sm">{% include "components/_icon.html" with name="plus" %} Add manually</a>
+  </div>
+{% endif %}

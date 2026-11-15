@@ -1,0 +1,60 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/requirements.css' %}">
+
+<section class="panel requirements" id="requirements">
+  <div class="req-head">
+    <span class="chatbot-avatar">{% include "components/_icon.html" with name="file" %}</span>
+    <div class="req-head-text">
+      <h2 class="section-title">Requirements</h2>
+      <p class="muted small">Functional and non-functional requirements of the project (Software Requirements Specification).</p>
+    </div>
+    <div class="req-head-actions">
+      <div class="dropdown">
+        <button type="button" class="btn btn-secondary btn-sm" data-dropdown>{% include "components/_icon.html" with name="plus" %} Add requirement</button>
+        <div class="menu" role="menu">
+          <a role="menuitem" href="{% url 'project:requirement_create' project.pk %}?type=functional">{% include "components/_icon.html" with name="check" %} Functional requirement</a>
+          <a role="menuitem" href="{% url 'project:requirement_create' project.pk %}?type=non_functional">{% include "components/_icon.html" with name="layers" %} Non-functional requirement</a>
+        </div>
+      </div>
+      {% if req.functional or req.non_functional %}
+        <a href="{% url 'project:requirement_export' project.pk %}" class="btn btn-primary btn-sm">{% include "components/_icon.html" with name="download" %} Export PDF</a>
+      {% else %}
+        <button type="button" class="btn btn-primary btn-sm" disabled title="Generate or add requirements first">{% include "components/_icon.html" with name="download" %} Export PDF</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <p class="req-auto muted small">
+    {% include "components/_icon.html" with name="spark" %}
+    Generated automatically by the <a href="#chatbot">UML assistant</a> each time it generates a diagram
+    ({% if claude_ready %}{{ generator_model }}{% else %}offline analyzer{% endif %}).
+    Your manual and edited requirements are never overwritten.
+  </p>
+
+  {# ---------- tabs ---------- #}
+  <div class="req-tabs" role="tablist">
+    <button type="button" role="tab" class="req-tab{% if req.tab == 'functional' %} active{% endif %}" data-req-tab="functional">
+      Functional requirements <span>{{ req.functional|length }}</span></button>
+    <button type="button" role="tab" class="req-tab{% if req.tab == 'non_functional' %} active{% endif %}" data-req-tab="non_functional">
+      Non-functional requirements <span>{{ req.non_functional|length }}</span>{% if req.to_confirm %}<em title="Proposed targets to confirm">{{ req.to_confirm }} to confirm</em>{% endif %}</button>
+  </div>
+
+  <div class="req-panel" data-req-panel="functional"{% if req.tab != 'functional' %} hidden{% endif %}>
+    {% include "Requirement/_table.html" with items=req.functional kind="functional" %}
+  </div>
+  <div class="req-panel" data-req-panel="non_functional"{% if req.tab != 'non_functional' %} hidden{% endif %}>
+    {% include "Requirement/_table.html" with items=req.non_functional kind="non_functional" %}
+  </div>
+
+  {# ---------- reuse for UML generation (existing chatbot endpoint) ---------- #}
+  {% if req.uml_text %}
+    <form method="post" action="#" class="req-uml" id="req-uml-form">
+      {% csrf_token %}
+      <input type="hidden" name="description" value="">
+      <span>{% include "components/_icon.html" with name="spark" %} Generate a UML diagram from these requirements</span>
+      <button type="submit" name="diagram_type" value="usecase" class="btn btn-secondary btn-sm">{% include "components/_icon.html" with name="usecase" %} Use case diagram</button>
+      <button type="submit" name="diagram_type" value="class" class="btn btn-secondary btn-sm">{% include "components/_icon.html" with name="class" %} Class diagram</button>
+    </form>
+  {% endif %}
+</section>
+<script src="{% static 'js/requirements.js' %}"></script>
