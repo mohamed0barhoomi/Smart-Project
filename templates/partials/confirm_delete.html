@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{# Page de confirmation commune. Les pages enfants remplissent les blocs. #}
+{% block title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="card form-card">
+    <div class="card-body">
+        <h2>{% block question %}Supprimer cet élément ?{% endblock %}</h2>
+        <p style="margin: 8px 0 22px;">{% block details %}Cette action est irréversible.{% endblock %}</p>
+        <form method="post" class="form-actions">
+            {% csrf_token %}
+            <a href="{% block retour %}{% endblock %}" class="btn">Annuler</a>
+            <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

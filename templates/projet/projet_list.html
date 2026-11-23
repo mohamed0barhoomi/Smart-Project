@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Mes projets{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Mes projets</h1>
+        <p>{{ projets|length }} projet{{ projets|length|pluralize }}</p>
+    </div>
+    <div class="actions">
+        <form method="get" class="search">
+            <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Rechercher un projet…">
+        </form>
+        <a href="{% url 'projet_create' %}" class="btn btn-primary">Nouveau projet</a>
+    </div>
+</div>
+
+{% if projets %}
+<div class="project-grid">
+    {% for projet_item in projets %}
+    <a href="{% url 'projet_detail' projet_item.pk %}" class="card project-card">
+        <h3>{{ projet_item.nom }}</h3>
+        <p>{{ projet_item.description|default:"Pas encore de description."|truncatechars:120 }}</p>
+        <div class="project-meta">
+            <span>{{ projet_item.besoins.count }} besoins · {{ projet_item.diagrammes.count }} diagrammes</span>
+            {# timesince : affiche "il y a 3 heures" par exemple #}
+            <span>{{ projet_item.updated_at|timesince }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    {% if request.GET.q %}
+        <h3>Aucun résultat pour « {{ request.GET.q }} »</h3>
+        <p>Essayez un autre mot-clé.</p>
+        <a href="{% url 'projet_list' %}" class="btn">Voir tous les projets</a>
+    {% else %}
+        <h3>Aucun projet pour l'instant</h3>
+        <p>Créez un projet puis décrivez-le dans le chat.</p>
+        <a href="{% url 'projet_create' %}" class="btn btn-primary">Créer mon premier projet</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

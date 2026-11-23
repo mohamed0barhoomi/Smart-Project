@@ -1,0 +1,15 @@
+{% extends "compte/base_auth.html" %}
+{% block title %}Inscription{% endblock %}
+
+{% block auth_content %}
+<h1>Créer un compte</h1>
+<p>Quelques informations suffisent pour commencer.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <button type="submit" class="btn btn-primary">Créer mon compte</button>
+</form>
+
+<p class="auth-switch">Déjà inscrit ? <a href="{% url 'login' %}">Se connecter</a></p>
+{% endblock %}

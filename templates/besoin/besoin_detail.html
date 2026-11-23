@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ besoin.code }} · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section=besoin.code|lower %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <span class="tag {% if besoin.type_besoin == 'F' %}tag-f{% else %}tag-nf{% endif %}">{{ besoin.code }}</span>
+        <h1 style="margin-top: 8px;">{{ besoin.titre }}</h1>
+    </div>
+    <div class="actions">
+        <a href="{% url 'besoin_list' projet.pk %}" class="btn">Retour</a>
+        <a href="{% url 'besoin_delete' projet.pk besoin.pk %}" class="btn">Supprimer</a>
+        <a href="{% url 'besoin_update' projet.pk besoin.pk %}" class="btn btn-primary">Modifier</a>
+    </div>
+</div>
+
+<div class="card form-card" style="max-width: 760px;">
+    <div class="card-body">
+        <dl class="definition">
+            <dt>Type</dt>        <dd>{{ besoin.get_type_besoin_display }}</dd>
+            {% if besoin.categorie %}
+            <dt>Catégorie</dt>   <dd>{{ besoin.get_categorie_display }}</dd>
+            {% endif %}
+            <dt>Priorité</dt>    <dd><span class="priority priority-{{ besoin.priorite }}">{{ besoin.get_priorite_display }}</span></dd>
+            <dt>Description</dt> <dd>{{ besoin.description|default:"—"|linebreaksbr }}</dd>
+            <dt>Origine</dt>     <dd>{{ besoin.get_source_display }}</dd>
+            <dt>Mis à jour</dt>  <dd class="mono small">{{ besoin.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

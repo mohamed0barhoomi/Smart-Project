@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier un besoin{% else %}Nouveau besoin{% endif %}{% endblock %}
+
+{% block breadcrumb %}{% with section="besoins" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% if object %}Modifier {{ object.code }}{% else %}Nouveau besoin{% endif %}</h1>
+        <p>Un bon besoin est court, vérifiable et commence souvent par « Le système doit… » ou « L'utilisateur peut… ».</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_fields.html" %}
+            <div class="form-actions">
+                <a href="{% url 'besoin_list' projet.pk %}" class="btn">Annuler</a>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // La catégorie n'a de sens que pour un besoin non fonctionnel :
+    // on cache le champ quand le type « Fonctionnel » est choisi.
+    const type = document.getElementById("id_type_besoin");
+    const blocCategorie = document.getElementById("id_categorie").closest(".field");
+    function majCategorie() {
+        blocCategorie.style.display = type.value === "NF" ? "" : "none";
+    }
+    type.addEventListener("change", majCategorie);
+    majCategorie();
+</script>
+{% endblock %}

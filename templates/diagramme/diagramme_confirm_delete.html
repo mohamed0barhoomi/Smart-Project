@@ -1,0 +1,4 @@
+{% extends "partials/confirm_delete.html" %}
+{% block question %}Supprimer « {{ diagramme.titre }} » ?{% endblock %}
+{% block details %}Le diagramme et son code PlantUML seront définitivement supprimés.{% endblock %}
+{% block retour %}{% url 'diagramme_detail' projet.pk diagramme.pk %}{% endblock %}

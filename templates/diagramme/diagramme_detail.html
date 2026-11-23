@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ diagramme.titre }}{% endblock %}
+
+{% block breadcrumb %}{% with section="diagrammes" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ diagramme.titre }}</h1>
+        <p>{{ diagramme.get_type_diagramme_display }} · {{ diagramme.get_source_display|lower }} · modifié {{ diagramme.updated_at|timesince }}</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'diagramme_list' projet.pk %}" class="btn">Retour</a>
+        <a href="{% url 'diagramme_delete' projet.pk diagramme.pk %}" class="btn">Supprimer</a>
+        <a href="{{ diagramme.image_url }}" target="_blank" class="btn">Ouvrir l'image</a>
+
+        {# export : menu déroulant. <details> s'ouvre au clic, même sans JavaScript #}
+        <details class="export-menu" id="export-menu">
+            <summary class="btn">  {# export : le bouton qui ouvre le menu #}
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>  {# export : icône téléchargement #}
+                <span class="export-label">Export Diagram</span>  {# export : texte du bouton (remplacé pendant l'export) #}
+                <svg class="export-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>  {# export : petite flèche #}
+            </summary>
+            <div class="export-options">  {# export : la liste des 3 formats #}
+                <a href="{% url 'diagramme_export' projet.pk diagramme.pk 'pdf' %}" class="export-option" data-format="PDF">  {# export : PDF #}
+                    <span class="export-icon export-icon-pdf">PDF</span>  {# export : icône du format #}
+                    <span><strong>PDF (.pdf)</strong><small>Document prêt à imprimer</small></span>
+                </a>
+                <a href="{% url 'diagramme_export' projet.pk diagramme.pk 'json' %}" class="export-option" data-format="JSON">  {# export : JSON #}
+                    <span class="export-icon export-icon-json">{ }</span>  {# export : icône du format #}
+                    <span><strong>JSON (.json)</strong><small>Classes, acteurs, relations…</small></span>
+                </a>
+                <a href="{% url 'diagramme_export' projet.pk diagramme.pk 'svg' %}" class="export-option" data-format="SVG">  {# export : SVG #}
+                    <span class="export-icon export-icon-svg">SVG</span>  {# export : icône du format #}
+                    <span><strong>SVG (.svg)</strong><small>Image vectorielle, sans perte</small></span>
+                </a>
+            </div>
+        </details>
+
+        <a href="{% url 'diagramme_update' projet.pk diagramme.pk %}" class="btn btn-primary">Modifier</a>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 18px;">
+    <div class="diagram-canvas" style="border-radius: 8px;">
+        <img src="{{ diagramme.image_url }}" alt="{{ diagramme.titre }}">
+    </div>
+</div>
+
+<details>
+    <summary class="small muted" style="cursor: pointer; margin-bottom: 10px;">Afficher le code PlantUML</summary>
+    <pre class="code-block">{{ diagramme.code_plantuml }}</pre>
+</details>
+{% endblock %}
+
+{# export : JavaScript du menu « Export Diagram » #}
+{% block scripts %}
+<script>
+    // export : éléments de la page utilisés par le script
+    const menuExport = document.getElementById("export-menu");          // le menu déroulant
+    const texteBouton = menuExport.querySelector(".export-label");      // texte du bouton
+
+    // export : ferme le menu si on clique ailleurs dans la page
+    document.addEventListener("click", function (e) {
+        if (!menuExport.contains(e.target)) menuExport.open = false;
+    });
+
+    // export : affiche un message comme ceux de Django (mêmes classes .flash)
+    function afficherMessage(type, texte) {
+        document.querySelectorAll(".flash-export").forEach(m => m.remove());   // un seul message d'export à la fois
+        const message = document.createElement("div");                         // nouveau bloc message
+        message.className = "flash flash-" + type + " flash-export";            // flash-success / flash-error
+        message.textContent = texte;                                            // textContent : pas d'injection HTML
+        document.querySelector(".page-header").before(message);                 // au-dessus du titre, comme les autres messages
+        setTimeout(() => message.remove(), 6000);                               // disparaît après 6 secondes
+    }
+
+    // export : récupère le nom du fichier envoyé par le serveur (en-tête Content-Disposition)
+    function nomDuFichier(reponse, secours) {
+        const entete = reponse.headers.get("Content-Disposition") || "";
+        const trouve = entete.match(/filename="([^"]+)"/);
+        return trouve ? trouve[1] : secours;
+    }
+
+    // export : au clic sur un format, on télécharge le fichier sans quitter la page
+    menuExport.querySelectorAll(".export-option").forEach(function (lien) {
+        lien.addEventListener("click", async function (e) {
+            e.preventDefault();                                       // on gère nous-mêmes le téléchargement
+            const format = lien.dataset.format;                       // "PDF", "JSON" ou "SVG"
+            menuExport.open = false;                                  // on referme le menu
+            menuExport.classList.add("is-loading");                   // bouton désactivé pendant l'export
+            texteBouton.textContent = "Export " + format + "…";      // indique que l'export est en cours
+            try {
+                const reponse = await fetch(lien.href, { headers: { "X-Requested-With": "XMLHttpRequest" } });   // appel à DiagrammeExportView
+                if (!reponse.ok) {                                    // erreur renvoyée par la vue (JSON)
+                    const donnees = await reponse.json().catch(() => ({}));
+                    throw new Error(donnees.erreur || "erreur " + reponse.status);
+                }
+                const fichier = await reponse.blob();                 // contenu du fichier
+                const nom = nomDuFichier(reponse, "diagramme." + format.toLowerCase());
+                const url = URL.createObjectURL(fichier);             // adresse temporaire du fichier dans le navigateur
+                const a = document.createElement("a");                // lien invisible pour lancer le téléchargement
+                a.href = url;
+                a.download = nom;                                     // nom du fichier enregistré
+                document.body.append(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);     // libère la mémoire
+                afficherMessage("success", "Diagramme exporté en " + format + " : " + nom);   // notification de succès
+            } catch (erreur) {
+                afficherMessage("error", "L'export " + format + " a échoué : " + erreur.message);   // notification d'erreur
+            } finally {
+                menuExport.classList.remove("is-loading");            // le bouton redevient normal
+                texteBouton.textContent = "Export Diagram";
+            }
+        });
+    });
+</script>
+{% endblock %}

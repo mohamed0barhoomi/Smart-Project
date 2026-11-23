@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Chat · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section="chat" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+
+    <section class="card chat">
+        <div class="chat-messages" id="messages">
+            {% for m in liste_messages %}
+                <div class="msg msg-{{ m.role }}">
+                    <div class="msg-meta">
+                        {% if m.role == "user" %}vous{% else %}analyste{% if m.modele %} · {{ m.modele }}{% endif %}{% endif %}
+                        · {{ m.created_at|time:"H:i" }}
+                    </div>
+                    {# linebreaksbr n'est pas utile ici : white-space: pre-wrap garde les retours à la ligne #}
+                    <div class="msg-body">{{ m.contenu }}</div>
+                </div>
+            {% empty %}
+                <div class="chat-intro">
+                    <h2>Décrivez votre projet</h2>
+                    <p>Écrivez librement : à quoi sert l'application, qui va l'utiliser,
+                        ce que chacun peut faire. L'assistant vous posera des questions pour compléter.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="chat-form" id="chat-form">
+            {% csrf_token %}
+            <textarea name="contenu" id="chat-input" rows="1" required
+                      placeholder="Ex : Une application pour gérer les emprunts d'une bibliothèque universitaire…"></textarea>
+            <button type="submit" class="btn btn-primary" id="chat-send">Envoyer</button>
+        </form>
+        <div class="chat-hint">Entrée pour envoyer · Maj + Entrée pour aller à la ligne</div>
+    </section>
+
+    <aside style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="card aside-card">
+            <div class="card-body">
+                <h3>Générer l'analyse</h3>
+                <p class="small">À partir de la conversation, SmartProjects crée :</p>
+                <ul class="checklist">
+                    <li>les besoins fonctionnels</li>
+                    <li>les besoins non fonctionnels</li>
+                    <li>le diagramme de cas d'utilisation</li>
+                    <li>le diagramme de classes</li>
+                </ul>
+                <form method="post" action="{% url 'generer' projet.pk %}" id="generer-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"
+                            {% if not liste_messages %}disabled title="Écrivez d'abord un message"{% endif %}>
+                        {% if nb_besoins or nb_diagrammes %}Régénérer{% else %}Générer{% endif %}
+                    </button>
+                </form>
+                {% if nb_besoins or nb_diagrammes %}
+                    <p class="small muted">Une nouvelle génération remplace les éléments générés par l'IA.
+                        Ceux que vous avez ajoutés à la main sont conservés.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card aside-card">
+            <div class="card-body">
+                <h3>Pour une bonne analyse, précisez</h3>
+                <ul class="checklist">
+                    <li>l'objectif du projet</li>
+                    <li>les types d'utilisateurs (acteurs)</li>
+                    <li>les actions de chaque acteur</li>
+                    <li>les données manipulées</li>
+                    <li>les contraintes (sécurité, délais, appareils…)</li>
+                </ul>
+            </div>
+        </div>
+
+        {% if liste_messages %}
+        <form method="post" action="{% url 'vider_chat' projet.pk %}"
+              onsubmit="return confirm('Effacer toute la conversation ?');">
+            {% csrf_token %}
+            <button type="submit" class="link-button">Effacer la conversation</button>
+        </form>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Petit JavaScript pour le confort d'utilisation du chat
+    const zone = document.getElementById("messages");
+    const champ = document.getElementById("chat-input");
+    const formulaire = document.getElementById("chat-form");
+
+    // 1) Faire défiler la conversation jusqu'au dernier message
+    zone.scrollTop = zone.scrollHeight;
+    champ.focus();
+
+    // 2) Entrée = envoyer, Maj+Entrée = nouvelle ligne
+    champ.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (champ.value.trim()) formulaire.requestSubmit();
+        }
+    });
+
+    // 3) La zone de texte s'agrandit avec le contenu
+    champ.addEventListener("input", function () {
+        champ.style.height = "auto";
+        champ.style.height = champ.scrollHeight + "px";
+    });
+
+    // 4) Pendant l'attente de la réponse de l'IA, on désactive les boutons
+    function attente(form, texte) {
+        form.addEventListener("submit", function () {
+            const bouton = form.querySelector("button");
+            bouton.disabled = true;
+            bouton.textContent = texte;
+        });
+    }
+    attente(formulaire, "…");
+
+    // 5) On affiche tout de suite le message de l'utilisateur, sans attendre la réponse
+    formulaire.addEventListener("submit", function () {
+        const intro = zone.querySelector(".chat-intro");
+        if (intro) intro.remove();
+        const bulle = document.createElement("div");
+        bulle.className = "msg msg-user";
+        bulle.innerHTML = '<div class="msg-meta">vous</div><div class="msg-body"></div>';
+        bulle.querySelector(".msg-body").textContent = champ.value;   // textContent : pas d'injection HTML
+        const attenteIA = document.createElement("div");
+        attenteIA.className = "msg msg-assistant";
+        attenteIA.innerHTML = '<div class="msg-meta">analyste</div><div class="msg-body muted">rédige une réponse…</div>';
+        zone.append(bulle, attenteIA);
+        zone.scrollTop = zone.scrollHeight;
+        champ.readOnly = true;   // readOnly et pas disabled : un champ disabled n'est pas envoyé
+    });
+    attente(document.getElementById("generer-form"), "Génération en cours…");
+</script>
+{% endblock %}

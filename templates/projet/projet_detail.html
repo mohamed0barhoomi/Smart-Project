@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% include "partials/breadcrumb_projet.html" %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ projet.nom }}</h1>
+        <p>{{ projet.description|default:"Pas de résumé." }}</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'projet_update' projet.pk %}" class="btn">Modifier</a>
+        <a href="{% url 'projet_delete' projet.pk %}" class="btn">Supprimer</a>
+        <a href="{% url 'chat' projet.pk %}" class="btn btn-primary">Ouvrir le chat</a>
+    </div>
+</div>
+
+<div class="stats">
+    <a href="{% url 'besoin_list' projet.pk %}?type=F" class="card stat">
+        <div class="value">{{ nb_bf }}</div><div class="label">Besoins fonctionnels</div>
+    </a>
+    <a href="{% url 'besoin_list' projet.pk %}?type=NF" class="card stat">
+        <div class="value">{{ nb_bnf }}</div><div class="label">Besoins non fonctionnels</div>
+    </a>
+    <a href="{% url 'diagramme_list' projet.pk %}" class="card stat">
+        <div class="value">{{ nb_diagrammes }}</div><div class="label">Diagrammes</div>
+    </a>
+    <a href="{% url 'chat' projet.pk %}" class="card stat">
+        <div class="value">{{ nb_messages }}</div><div class="label">Messages échangés</div>
+    </a>
+</div>
+
+{% if not nb_messages %}
+<div class="empty">
+    <h3>Ce projet n'est pas encore décrit</h3>
+    <p>Expliquez votre idée dans le chat : l'assistant vous posera quelques questions,<br>puis générera les besoins et les diagrammes.</p>
+    <a href="{% url 'chat' projet.pk %}" class="btn btn-primary">Commencer la description</a>
+</div>
+{% else %}
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Derniers besoins</h2>
+            <a href="{% url 'besoin_list' projet.pk %}" class="btn btn-sm">Tout voir</a>
+        </div>
+        <table class="table">
+            <tbody>
+            {% for besoin in derniers_besoins %}
+                <tr>
+                    <td style="width: 70px;"><span class="tag {% if besoin.type_besoin == 'F' %}tag-f{% else %}tag-nf{% endif %}">{{ besoin.code }}</span></td>
+                    <td><a href="{% url 'besoin_detail' projet.pk besoin.pk %}" class="cell-title">{{ besoin.titre }}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td class="muted">Aucun besoin. Lancez la génération depuis le chat.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Diagrammes</h2>
+            <a href="{% url 'diagramme_list' projet.pk %}" class="btn btn-sm">Tout voir</a>
+        </div>
+        <table class="table">
+            <tbody>
+            {% for d in diagrammes %}
+                <tr>
+                    <td>
+                        <a href="{% url 'diagramme_detail' projet.pk d.pk %}" class="cell-title">{{ d.titre }}</a>
+                        <div class="cell-sub">{{ d.get_type_diagramme_display }}</div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td class="muted">Aucun diagramme pour l'instant.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,4 @@
+{% extends "partials/confirm_delete.html" %}
+{% block question %}Supprimer le projet « {{ object.nom }} » ?{% endblock %}
+{% block details %}Le chat, les {{ object.besoins.count }} besoins et les {{ object.diagrammes.count }} diagrammes de ce projet seront aussi supprimés. Cette action est irréversible.{% endblock %}
+{% block retour %}{% url 'projet_detail' object.pk %}{% endblock %}

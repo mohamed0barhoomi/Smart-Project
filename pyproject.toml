@@ -1,0 +1,15 @@
+[project]
+name = "smartprojects"
+version = "0.1.0"
+description = "Génération des besoins et des diagrammes UML d'un projet à partir d'un chat"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django==5.2.*",
+    "python-dotenv>=1.2.3",
+    "requests>=2.32",
+]
+
+# Pas de [build-system] : ce n'est pas une bibliothèque à publier, juste une application.
+[tool.uv]
+package = false

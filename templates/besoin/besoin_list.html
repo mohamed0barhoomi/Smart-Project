@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Besoins · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section="besoins" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Besoins</h1>
+        <p>Ce que le système doit faire (fonctionnels) et comment il doit le faire (non fonctionnels).</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'besoin_create' projet.pk %}?type={% if filtre_type == 'NF' %}NF{% else %}F{% endif %}" class="btn btn-primary">Ajouter un besoin</a>
+    </div>
+</div>
+
+<nav class="tabs">
+    <a href="?" class="{% if not filtre_type %}active{% endif %}">Tous<span class="count">{{ nb_total }}</span></a>
+    <a href="?type=F" class="{% if filtre_type == 'F' %}active{% endif %}">Fonctionnels<span class="count">{{ nb_f }}</span></a>
+    <a href="?type=NF" class="{% if filtre_type == 'NF' %}active{% endif %}">Non fonctionnels<span class="count">{{ nb_nf }}</span></a>
+</nav>
+
+{% if besoins %}
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 90px;">Réf.</th>
+                <th>Besoin</th>
+                <th style="width: 140px;">Catégorie</th>
+                <th style="width: 110px;">Priorité</th>
+                <th style="width: 190px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for besoin in besoins %}
+            <tr>
+                <td><span class="tag {% if besoin.type_besoin == 'F' %}tag-f{% else %}tag-nf{% endif %}">{{ besoin.code }}</span></td>
+                <td>
+                    <a href="{% url 'besoin_detail' projet.pk besoin.pk %}" class="cell-title">{{ besoin.titre }}</a>
+                    {% if besoin.source == "ia" %}<span class="tag tag-ia">IA</span>{% endif %}
+                    {% if besoin.description %}<div class="cell-sub">{{ besoin.description|truncatechars:110 }}</div>{% endif %}
+                </td>
+                {# get_FOO_display() : affiche le libellé lisible d'un champ "choices" #}
+                <td class="muted">{{ besoin.get_categorie_display|default:"—" }}</td>
+                <td><span class="priority priority-{{ besoin.priorite }}">{{ besoin.get_priorite_display }}</span></td>
+                <td>
+                    <div class="row-actions">
+                        <a href="{% url 'besoin_update' projet.pk besoin.pk %}" class="btn btn-sm">Modifier</a>
+                        <a href="{% url 'besoin_delete' projet.pk besoin.pk %}" class="btn btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty">
+    <h3>Aucun besoin{% if filtre_type == 'F' %} fonctionnel{% elif filtre_type == 'NF' %} non fonctionnel{% endif %}</h3>
+    <p>Générez-les automatiquement depuis le chat, ou ajoutez-les vous-même.</p>
+    <div class="actions" style="justify-content: center;">
+        <a href="{% url 'chat' projet.pk %}" class="btn">Aller au chat</a>
+        <a href="{% url 'besoin_create' projet.pk %}" class="btn btn-primary">Ajouter un besoin</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

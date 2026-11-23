@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{# On remplace tout le bloc "body" : pas de barre latérale sur les pages de connexion #}
+{% block body %}
+<div class="auth">
+    <section class="auth-form">
+        <div class="brand">{% include "partials/logo.html" %} SmartProjects</div>
+        {% block auth_content %}{% endblock %}
+    </section>
+
+    {# Illustration : un petit diagramme de classes dessiné en HTML/CSS #}
+    <section class="auth-visual">
+        <div class="uml-row">
+            <div class="uml-box">
+                <div class="uml-name">Projet</div>
+                <div class="uml-attrs">- nom : String<br>- description : Text</div>
+                <div>+ genererBesoins()<br>+ genererDiagrammes()</div>
+            </div>
+            <div class="uml-link"><span>1..*</span></div>
+            <div class="uml-box">
+                <div class="uml-name">Besoin</div>
+                <div class="uml-attrs">- type : F | NF<br>- priorite : String</div>
+                <div>+ modifier()</div>
+            </div>
+        </div>
+        <p class="auth-caption">Décrivez votre projet dans un chat. SmartProjects en tire les besoins
+            fonctionnels, non fonctionnels et les diagrammes UML — que vous pouvez ensuite corriger.</p>
+    </section>
+</div>
+{% endblock %}

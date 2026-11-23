@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb"><a href="{% url 'projet_list' %}">projets</a><span>/</span>{% if object %}modifier{% else %}nouveau{% endif %}</div>
+{% endblock %}
+
+{% block content %}
+{# La même page sert à la création et à la modification : "object" n'existe qu'en modification #}
+<div class="page-header">
+    <div>
+        <h1>{% if object %}Modifier « {{ object.nom }} »{% else %}Nouveau projet{% endif %}</h1>
+        <p>{% if object %}Mettez à jour le nom ou le résumé.{% else %}Donnez un nom à votre projet. Vous le décrirez en détail dans le chat.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_fields.html" %}
+            <div class="form-actions">
+                <a href="{% if object %}{% url 'projet_detail' object.pk %}{% else %}{% url 'projet_list' %}{% endif %}" class="btn">Annuler</a>
+                <button type="submit" class="btn btn-primary">{% if object %}Enregistrer{% else %}Créer et ouvrir le chat{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

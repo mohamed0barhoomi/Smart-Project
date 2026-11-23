@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier le diagramme{% else %}Nouveau diagramme{% endif %}{% endblock %}
+
+{% block breadcrumb %}{% with section="diagrammes" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% if object %}Modifier « {{ object.titre }} »{% else %}Nouveau diagramme{% endif %}</h1>
+        <p>Modifiez le code à gauche : l'aperçu se met à jour automatiquement.
+            <a href="https://plantuml.com/fr/" target="_blank" style="color: var(--accent);">Syntaxe PlantUML</a></p>
+    </div>
+</div>
+
+<form method="post" novalidate class="editor-layout">
+    {% csrf_token %}
+    <div class="card">
+        <div class="card-body">
+            {% include "partials/form_fields.html" %}
+            <div class="form-actions">
+                <a href="{% if object %}{% url 'diagramme_detail' projet.pk object.pk %}{% else %}{% url 'diagramme_list' projet.pk %}{% endif %}" class="btn">Annuler</a>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card preview">
+        <div class="card-header"><h2>Aperçu</h2><span class="small muted" id="etat"></span></div>
+        <div class="diagram-canvas">
+            <img id="apercu" alt="Aperçu du diagramme">
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Aperçu en direct : même principe que Diagramme.image_url en Python.
+    // On encode le texte en hexadécimal et on demande l'image au serveur PlantUML.
+    const editeur = document.getElementById("editeur");
+    const apercu = document.getElementById("apercu");
+    const etat = document.getElementById("etat");
+
+    function versHex(texte) {
+        // TextEncoder transforme le texte en octets UTF-8 (accents compris)
+        return Array.from(new TextEncoder().encode(texte))
+            .map(octet => octet.toString(16).padStart(2, "0"))
+            .join("");
+    }
+
+    function majApercu() {
+        etat.textContent = "mise à jour…";
+        apercu.src = "https://www.plantuml.com/plantuml/svg/~h" + versHex(editeur.value);
+    }
+    apercu.addEventListener("load", () => etat.textContent = "");
+    // Si l'image ne charge pas : pas d'internet, ou erreur de syntaxe dans le code
+    apercu.addEventListener("error", () => etat.textContent = "aperçu indisponible (vérifiez le code ou la connexion)");
+
+    // On attend 600 ms après la dernière frappe avant de recharger (évite trop de requêtes)
+    let minuteur;
+    editeur.addEventListener("input", function () {
+        clearTimeout(minuteur);
+        minuteur = setTimeout(majApercu, 600);
+    });
+
+    // La touche Tab insère 2 espaces au lieu de quitter la zone de texte
+    editeur.addEventListener("keydown", function (e) {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            editeur.setRangeText("  ", editeur.selectionStart, editeur.selectionEnd, "end");
+        }
+    });
+
+    majApercu();
+</script>
+{% endblock %}

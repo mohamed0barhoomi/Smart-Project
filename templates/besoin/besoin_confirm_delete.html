@@ -1,0 +1,4 @@
+{% extends "partials/confirm_delete.html" %}
+{% block question %}Supprimer le besoin {{ besoin.code }} ?{% endblock %}
+{% block details %}« {{ besoin.titre }} » sera définitivement supprimé.{% endblock %}
+{% block retour %}{% url 'besoin_list' projet.pk %}{% endblock %}

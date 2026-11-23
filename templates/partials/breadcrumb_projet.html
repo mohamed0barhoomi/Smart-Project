@@ -1,0 +1,5 @@
+<div class="breadcrumb">
+    <a href="{% url 'projet_list' %}">projets</a><span>/</span>
+    <a href="{% url 'projet_detail' projet.pk %}">{{ projet.nom|lower|truncatechars:40 }}</a>
+    {% if section %}<span>/</span>{{ section }}{% endif %}
+</div>

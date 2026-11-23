@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartProjects{% endblock %} · SmartProjects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    {# {% static %} construit le bon chemin vers le dossier static/ #}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+{% comment %} ------------------------------------------------------------------
+   HÉRITAGE DE TEMPLATES :
+   Chaque page commence par {% extends "base.html" %} et ne remplit
+   que les {% block ... %}. La barre latérale et le <head> sont ainsi
+   écrits une seule fois, ici.
+   ------------------------------------------------------------------ {% endcomment %}
+{% block body %}
+<div class="layout">
+
+    <aside class="sidebar">
+        <a href="{% url 'projet_list' %}" class="brand">
+            {% include "partials/logo.html" %}
+            SmartProjects
+        </a>
+
+        <nav class="nav-section">
+            <div class="nav-label">Espace</div>
+            <a href="{% url 'projet_list' %}" class="nav-link {% if not projet %}active{% endif %}">Mes projets</a>
+            <a href="{% url 'projet_create' %}" class="nav-link">Nouveau projet</a>
+        </nav>
+
+        {# Ce bloc n'apparaît que si la page concerne un projet #}
+        {% if projet %}
+        <nav class="nav-section">
+            <div class="nav-label">Projet</div>
+            <div class="nav-project-name" title="{{ projet.nom }}">{{ projet.nom }}</div>
+            <a href="{% url 'projet_detail' projet.pk %}" class="nav-link {% if onglet == 'apercu' %}active{% endif %}">Aperçu</a>
+            <a href="{% url 'chat' projet.pk %}" class="nav-link {% if onglet == 'chat' %}active{% endif %}">
+                Chat <span class="count">{{ projet.messages.count }}</span>
+            </a>
+            <a href="{% url 'besoin_list' projet.pk %}" class="nav-link {% if onglet == 'besoins' %}active{% endif %}">
+                Besoins <span class="count">{{ projet.besoins.count }}</span>
+            </a>
+            <a href="{% url 'diagramme_list' projet.pk %}" class="nav-link {% if onglet == 'diagrammes' %}active{% endif %}">
+                Diagrammes <span class="count">{{ projet.diagrammes.count }}</span>
+            </a>
+        </nav>
+        {% endif %}
+
+        <div class="sidebar-footer">
+            <div class="user">
+                <span class="avatar">{{ user.username|first }}</span>
+                <span>{{ user.username }}</span>
+            </div>
+            {# Depuis Django 5, la déconnexion doit se faire en POST #}
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="link-button">Quitter</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main">
+        {% block breadcrumb %}{% endblock %}
+
+        {# Messages flash envoyés par les vues avec messages.success(...) / messages.error(...) #}
+        {% for message in messages %}
+            <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

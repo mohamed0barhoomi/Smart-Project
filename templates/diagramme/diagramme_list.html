@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Diagrammes · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section="diagrammes" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Diagrammes</h1>
+        <p>Diagrammes UML du projet, modifiables en PlantUML.</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'diagramme_create' projet.pk %}?type=usecase" class="btn">Nouveau cas d'utilisation</a>
+        <a href="{% url 'diagramme_create' projet.pk %}?type=classe" class="btn btn-primary">Nouveau diagramme de classes</a>
+    </div>
+</div>
+
+{% if diagrammes %}
+<div class="diagram-grid">
+    {% for d in diagrammes %}
+    <div class="card">
+        <a href="{% url 'diagramme_detail' projet.pk d.pk %}" class="diagram-thumb">
+            <img src="{{ d.image_url }}" alt="{{ d.titre }}" loading="lazy">
+        </a>
+        <div class="card-body" style="padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; gap: 10px; align-items: start;">
+                <div>
+                    <a href="{% url 'diagramme_detail' projet.pk d.pk %}" class="cell-title">{{ d.titre }}</a>
+                    <div class="cell-sub">{{ d.get_type_diagramme_display }}</div>
+                </div>
+                {% if d.source == "ia" %}<span class="tag tag-ia">IA</span>{% endif %}
+            </div>
+            <div class="actions" style="margin-top: 12px;">
+                <a href="{% url 'diagramme_detail' projet.pk d.pk %}" class="btn btn-sm">Voir</a>
+                <a href="{% url 'diagramme_update' projet.pk d.pk %}" class="btn btn-sm">Modifier</a>
+                <a href="{% url 'diagramme_delete' projet.pk d.pk %}" class="btn btn-sm">Supprimer</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <h3>Aucun diagramme</h3>
+    <p>Décrivez le projet dans le chat puis cliquez sur « Générer », ou créez un diagramme vous-même.</p>
+    <a href="{% url 'chat' projet.pk %}" class="btn btn-primary">Aller au chat</a>
+</div>
+{% endif %}
+{% endblock %}

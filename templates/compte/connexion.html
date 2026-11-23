@@ -1,0 +1,25 @@
+{% extends "compte/base_auth.html" %}
+{% block title %}Connexion{% endblock %}
+
+{% block auth_content %}
+<h1>Connexion</h1>
+<p>Reprenez vos projets là où vous les avez laissés.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% if form.errors %}
+        <div class="flash flash-error">Nom d'utilisateur ou mot de passe incorrect.</div>
+    {% endif %}
+    <div class="field">
+        <label for="id_username">Nom d'utilisateur</label>
+        {{ form.username }}
+    </div>
+    <div class="field">
+        <label for="id_password">Mot de passe</label>
+        {{ form.password }}
+    </div>
+    <button type="submit" class="btn btn-primary">Se connecter</button>
+</form>
+
+<p class="auth-switch">Pas encore de compte ? <a href="{% url 'inscription' %}">Créer un compte</a></p>
+{% endblock %}
