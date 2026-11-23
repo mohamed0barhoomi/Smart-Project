@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+{% block content %}
+<div class="panel auth-panel is-wide">
+    <div class="panel-body">
+        <div class="auth-head">
+            <span class="auth-icon">{% include "components/_icon.html" with name="user" %}</span>
+            <h1>Créer un compte</h1>
+            <p class="muted">Particulier ou entreprise. L'adresse e-mail doit se terminer par @gmail.com.</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_fields_ext.html" %}
+            <button type="submit" class="btn btn-primary btn-block auth-submit">Créer mon compte</button>
+        </form>
+    </div>
+    <div class="auth-foot">Déjà inscrit ? <a href="{% url 'utilisateur:login' %}">Se connecter</a></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% include "partials/champs_entreprise.js.html" %}
+{% endblock %}

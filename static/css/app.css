@@ -1,0 +1,269 @@
+/* ==========================================================
+   SmartProjects - app.css
+   Styles des pages Utilisateurs / Abonnements (accueil, connexion,
+   tableau de bord, profil, plans, abonnements, paiements).
+
+   Ce fichier REPREND les couleurs, la police et les arrondis de style.css
+   (variables --accent, --line, --radius...) : tout le site a donc le même
+   style. Toutes les règles sont préfixées par ".ext" (ajouté sur <main>
+   dans base.html) pour ne jamais modifier les pages des autres membres.
+   À charger APRÈS style.css.
+   ========================================================== */
+
+/* ---------- Icônes ---------- */
+.icon {
+    width: 18px; height: 18px; flex-shrink: 0;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+.btn-sm .icon { width: 15px; height: 15px; }
+
+/* ---------- Visiteur non connecté ---------- */
+.public-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 42px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+}
+.public-nav { display: flex; gap: 8px; }
+.public-main { margin: 0 auto; }
+
+/* ---------- Utilitaires ---------- */
+.ext .nowrap { white-space: nowrap; }
+.ext .mb-10 { margin-bottom: 10px; }
+.ext .mb-20 { margin-bottom: 20px; }
+.ext .spacer { flex: 1; }
+.ext code { font-family: var(--mono); font-size: 12.5px; background: var(--line-soft); padding: 1px 6px; border-radius: 4px; }
+
+/* ---------- En-tête de page ---------- */
+.ext .page-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 20px; flex-wrap: wrap; margin-bottom: 26px;
+}
+.ext .page-head p { margin-top: 5px; }
+.ext .page-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ext .eyebrow {
+    display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--accent); margin-bottom: 4px;
+}
+.ext .breadcrumb .sep { margin: 0 6px; }
+
+/* ---------- Boutons (en plus de .btn, .btn-primary, .btn-danger de style.css) ---------- */
+.ext .btn-secondary { background: var(--surface); }
+.ext .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
+.ext .btn-ghost:hover { background: var(--line-soft); border-color: transparent; color: var(--ink); }
+.ext .btn-icon { padding: 6px; }
+.ext .btn-block { display: flex; justify-content: center; width: 100%; }
+.ext .btn.is-danger:hover { background: var(--danger-soft); color: var(--danger); }
+.ext .btn-danger .icon { stroke: #fff; }
+
+/* ---------- Panneaux (équivalent de .card) ---------- */
+.ext .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+.ext .panel.is-narrow { max-width: 640px; }
+.ext .panel.is-wide { max-width: 760px; }
+.ext .panel-head {
+    padding: 14px 22px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.ext .panel-body { padding: 22px 24px; }
+.ext .panel-foot {
+    padding: 14px 22px; border-top: 1px solid var(--line);
+    display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.ext .section-title { font-size: 16px; }
+.ext .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.ext .grid-2 > .panel { margin-bottom: 0; }
+
+/* ---------- Messages (alert) ---------- */
+.ext .alert {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 11px 15px; border-radius: var(--radius);
+    border: 1px solid; border-left-width: 4px; font-size: 13.5px;
+    margin-bottom: 18px;
+}
+.ext .alert p { color: inherit; }
+.ext .alert a { text-decoration: underline; font-weight: 500; }
+.ext .alert-success { background: var(--accent-soft); border-color: #bfd8c5; border-left-color: var(--accent); color: var(--accent); }
+.ext .alert-error   { background: var(--danger-soft); border-color: #efc6c1; border-left-color: var(--danger); color: var(--danger); }
+.ext .alert-warning { background: #fdf5e4; border-color: #ecd7a8; border-left-color: #c98a16; color: #7d5410; }
+.ext .alert-info    { background: #eef4f8; border-color: #c9dbe7; border-left-color: #3b6e8f; color: #2f5a75; }
+
+/* ---------- Badges ---------- */
+.ext .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 12px;
+    background: var(--line-soft); color: var(--ink-2); white-space: nowrap;
+}
+.ext .badge-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ext .badge-success { background: var(--accent-soft); color: var(--accent); }
+.ext .badge-warning { background: var(--ochre-soft); color: var(--ochre); }
+.ext .badge-danger  { background: var(--danger-soft); color: var(--danger); }
+.ext .badge-muted   { background: var(--line-soft); color: var(--muted); }
+.ext .badge-dark    { background: var(--ink); color: #fff; }
+.ext .badge-company { background: var(--ochre-soft); color: var(--ochre); }
+
+/* ---------- Tableaux ---------- */
+.ext .table-wrap { overflow-x: auto; }
+.ext .table td { vertical-align: middle; }
+.ext .col-actions { text-align: right; width: 1%; white-space: nowrap; }
+.ext .table .row-actions { opacity: 1; }
+.ext .cell-user { display: flex; align-items: center; gap: 10px; }
+.ext .cell-user > span:last-child { display: flex; flex-direction: column; line-height: 1.35; }
+.ext .empty-cell { text-align: center; padding: 0 !important; }
+.ext .empty-state { padding: 44px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ext .empty-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); margin-bottom: 4px;
+}
+
+/* ---------- Pagination ---------- */
+.ext .pagination {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 12px 22px; border-top: 1px solid var(--line);
+}
+.ext .pagination-pages { display: flex; gap: 4px; }
+.ext .page-num {
+    min-width: 30px; height: 30px; padding: 0 8px; display: grid; place-items: center;
+    border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface);
+    font-size: 13px; color: var(--ink-2);
+}
+.ext a.page-num:hover { border-color: var(--accent); color: var(--accent); }
+.ext .page-num.is-current { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ext .page-num.is-disabled { opacity: .4; }
+.ext .page-num.is-gap { border-color: transparent; background: transparent; }
+
+/* ---------- Avatar ---------- */
+.ext .avatar-lg { width: 54px; height: 54px; font-size: 21px; }
+
+/* ---------- Formulaires ---------- */
+.ext form.panel, .ext .panel > form { padding: 22px 24px; }
+.ext .panel-body form { padding: 0; }
+.ext .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+.ext .form-grid.single { grid-template-columns: 1fr; }
+.ext .form-grid .field.full { grid-column: 1 / -1; }
+.ext .field .required { color: var(--danger); margin-left: 3px; }
+.ext .field-help { display: block; color: var(--muted); font-size: 12.5px; margin-top: 5px; }
+.ext .field-error { display: block; color: var(--danger); font-size: 12.5px; margin-top: 5px; }
+.ext .field.is-checkbox { display: flex; align-items: center; gap: 8px; }
+.ext .field.is-checkbox label { margin: 0; order: 2; }
+.ext .field.is-checkbox input { width: auto; }
+.ext .filters {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 14px 22px; border-bottom: 1px solid var(--line);
+}
+.ext .filters select {
+    padding: 7px 10px; border: 1px solid #d9d4c7; border-radius: var(--radius);
+    font: inherit; background: #fff; color: var(--ink);
+}
+.ext .search { position: relative; }
+.ext .search .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 16px; height: 16px; }
+.ext .search input { padding-left: 32px; }
+
+/* ---------- Filtres segmentés (statut) ---------- */
+.ext .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.ext .segmented a { padding: 6px 13px; font-size: 13px; color: var(--ink-2); border-right: 1px solid var(--line); }
+.ext .segmented a:last-child { border-right: none; }
+.ext .segmented a:hover { background: var(--line-soft); }
+.ext .segmented a.is-active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+/* ---------- Fiches détail ---------- */
+.ext .identity { display: flex; align-items: center; gap: 16px; padding: 22px 24px; border-bottom: 1px solid var(--line); }
+.ext .info-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; }
+.ext .info-strip > div { padding: 14px 24px; border-bottom: 1px solid var(--line-soft); }
+.ext .info-strip dt { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+.ext .info-strip dd { color: var(--ink); }
+.ext .info-strip .is-wide { grid-column: 1 / -1; }
+
+/* ---------- Statistiques (tableau de bord admin) ---------- */
+.ext .stats { display: grid; gap: 16px; margin-bottom: 22px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.ext .stats.is-4 { grid-template-columns: repeat(4, 1fr); }
+.ext .stat {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px; box-shadow: var(--shadow);
+}
+.ext .stat-icon {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent);
+}
+.ext .stat-icon.is-company { background: var(--ochre-soft); color: var(--ochre); }
+.ext .stat-icon.is-success { background: var(--accent-soft); color: var(--accent); }
+.ext .stat-icon.is-warning { background: #fdf5e4; color: #a8700f; }
+.ext .stat-label { font-size: 12.5px; color: var(--muted); }
+.ext .stat-value { font-size: 24px; font-weight: 600; line-height: 1.2; }
+.ext .stat-unit { font-size: 14px; font-weight: 500; color: var(--muted); }
+.ext .stat-sub { font-size: 12.5px; color: var(--muted); }
+.ext .stat-sub a { color: var(--accent); }
+
+.ext .link-list { list-style: none; }
+.ext .link-list a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 22px; border-bottom: 1px solid var(--line-soft); font-weight: 500;
+}
+.ext .link-list li:last-child a { border-bottom: none; }
+.ext .link-list a:hover { background: var(--line-soft); color: var(--accent); }
+.ext .link-list .arrow { margin-left: auto; width: 15px; height: 15px; color: var(--muted); }
+
+/* ---------- Tableau de bord client ---------- */
+.ext .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.ext .module-card { padding: 20px; margin-bottom: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.ext .module-card .btn { margin-top: auto; }
+.ext .module-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+
+/* ---------- Plans ---------- */
+.ext .plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.ext .plan-card { padding: 22px; margin-bottom: 0; display: flex; flex-direction: column; gap: 10px; }
+.ext .plan-card.is-current { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(22, 101, 52, .12); }
+.ext .plan-price strong { font-size: 26px; font-weight: 600; margin-right: 6px; }
+.ext .plan-card .description { flex: 1; }
+
+/* ---------- Connexion / inscription ---------- */
+.ext .auth-panel { max-width: 440px; margin: 40px auto; }
+.ext .auth-panel.is-wide { max-width: 760px; }
+.ext .auth-head { text-align: center; margin-bottom: 22px; }
+.ext .auth-head p { margin-top: 4px; }
+.ext .auth-icon {
+    width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 12px;
+    display: grid; place-items: center; background: var(--accent-soft); color: var(--accent);
+}
+.ext .auth-submit { margin-top: 6px; }
+.ext .auth-foot { text-align: center; padding: 14px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13.5px; }
+.ext .auth-foot a { color: var(--accent); font-weight: 500; }
+
+/* ---------- Page d'accueil ---------- */
+.ext .hero { padding: 48px 40px; text-align: center; }
+.ext .hero h1 { font-size: 32px; max-width: 760px; margin: 0 auto 12px; }
+.ext .hero-lead { max-width: 640px; margin: 0 auto; font-size: 15.5px; }
+.ext .hero-actions { display: flex; gap: 10px; justify-content: center; margin: 26px 0 34px; }
+.ext .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; text-align: left; }
+.ext .feature { padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.ext .feature .stat-icon { margin-bottom: 10px; }
+
+/* ---------- Fenêtre de confirmation de suppression ---------- */
+.modal {
+    border: none; border-radius: 12px; padding: 0; width: min(440px, 92vw);
+    box-shadow: 0 12px 40px rgba(30, 25, 10, .25); margin: auto;
+}
+.modal::backdrop { background: rgba(34, 37, 31, .45); }
+.modal-body { padding: 26px 26px 10px; text-align: center; }
+.modal-body h2 { margin: 10px 0 6px; }
+.modal-icon {
+    width: 46px; height: 46px; border-radius: 50%; margin: 0 auto;
+    display: grid; place-items: center; background: var(--danger-soft); color: var(--danger);
+}
+.modal-foot { display: flex; justify-content: center; gap: 8px; padding: 16px 26px 24px; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 900px) {
+    .ext .stats.is-4 { grid-template-columns: repeat(2, 1fr); }
+    .ext .grid-2, .ext .form-grid { grid-template-columns: 1fr; }
+    .public-header { padding: 12px 18px; }
+}

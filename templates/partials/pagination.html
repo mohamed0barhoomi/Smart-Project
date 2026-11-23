@@ -1,0 +1,26 @@
+{% if liste.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    <span class="muted small">{{ liste.start_index }}–{{ liste.end_index }} sur {{ liste.paginator.count }}</span>
+    <div class="pagination-pages">
+        {% if liste.has_previous %}
+            <a class="page-num" href="{% querystring page=liste.previous_page_number %}" aria-label="Page précédente">‹</a>
+        {% else %}
+            <span class="page-num is-disabled" aria-hidden="true">‹</span>
+        {% endif %}
+        {% for numero in liste.plage %}
+            {% if numero == liste.paginator.ELLIPSIS %}
+                <span class="page-num is-gap">…</span>
+            {% elif numero == liste.number %}
+                <span class="page-num is-current" aria-current="page">{{ numero }}</span>
+            {% else %}
+                <a class="page-num" href="{% querystring page=numero %}">{{ numero }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if liste.has_next %}
+            <a class="page-num" href="{% querystring page=liste.next_page_number %}" aria-label="Page suivante">›</a>
+        {% else %}
+            <span class="page-num is-disabled" aria-hidden="true">›</span>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}

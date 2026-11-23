@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ utilisateur.username }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'utilisateur:utilisateur_list' %}">Utilisateurs</a><span class="sep">/</span><span aria-current="page">{{ utilisateur.username }}</span>
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Fiche utilisateur</span>
+        <h1>{{ utilisateur.get_full_name|default:utilisateur.username }}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'utilisateur:utilisateur_delete' utilisateur.pk %}" data-confirm-titre="Supprimer l'utilisateur" data-confirm="Voulez-vous vraiment supprimer {{ utilisateur.username }} ? Cette action est définitive." class="btn btn-ghost is-danger">
+            {% include "components/_icon.html" with name="trash" %}Supprimer
+        </a>
+        <a href="{% url 'utilisateur:utilisateur_password' utilisateur.pk %}" class="btn btn-secondary">
+            {% include "components/_icon.html" with name="lock" %}Réinitialiser le mot de passe
+        </a>
+        <a href="{% url 'utilisateur:utilisateur_update' utilisateur.pk %}" class="btn btn-primary">
+            {% include "components/_icon.html" with name="pencil" %}Modifier
+        </a>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="identity">
+        <span class="avatar avatar-lg" aria-hidden="true">{{ utilisateur.username|slice:":1" }}</span>
+        <div>
+            <h2>@{{ utilisateur.username }}</h2>
+            <p class="muted small">{{ utilisateur.email }}</p>
+        </div>
+        {% include "components/_badge_role.html" with u=utilisateur %}
+    </div>
+    <dl class="info-strip">
+        <div><dt>Prénom</dt><dd>{{ utilisateur.first_name|default:"—" }}</dd></div>
+        <div><dt>Nom</dt><dd>{{ utilisateur.last_name|default:"—" }}</dd></div>
+        <div><dt>Statut</dt><dd>{% if utilisateur.is_active %}<span class="badge badge-dot badge-success">Actif</span>{% else %}<span class="badge badge-dot badge-muted">Inactif</span>{% endif %}</dd></div>
+        <div><dt>Inscrit le</dt><dd>{{ utilisateur.date_joined|date:"d/m/Y H:i" }}</dd></div>
+        <div><dt>Projets</dt><dd>{{ nb_projets }}</dd></div>
+        <div><dt>Abonnement</dt><dd>{% if abonnement %}<a href="{% url 'abonnement:abonnement_detail' abonnement.pk %}">{{ abonnement.plan.name }}</a> {% include "components/_badge_statut.html" with code=abonnement.payment_status libelle=abonnement.get_payment_status_display %}{% else %}Aucun{% endif %}</dd></div>
+        {% if utilisateur.role == "COMPANY" %}
+        <div><dt>Entreprise</dt><dd>{{ utilisateur.company_name|default:"—" }}</dd></div>
+        <div class="is-wide"><dt>Description</dt><dd>{{ utilisateur.company_description|default:"—"|linebreaksbr }}</dd></div>
+        {% endif %}
+    </dl>
+</section>
+{% endblock %}

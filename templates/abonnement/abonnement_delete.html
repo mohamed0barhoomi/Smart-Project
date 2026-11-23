@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Supprimer l'abonnement{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'abonnement:abonnement_list' %}">Abonnements</a><span class="sep">/</span>
+    <a href="{% url 'abonnement:abonnement_detail' abonnement.pk %}">{{ abonnement.user.username }} · {{ abonnement.plan.name }}</a><span class="sep">/</span><span aria-current="page">Supprimer</span>
+</nav>
+
+<div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-modal">
+        <div class="modal-body">
+            <div class="modal-icon">{% include "components/_icon.html" with name="trash" %}</div>
+            <h2 id="titre-modal">Supprimer l'abonnement</h2>
+            <p class="muted">Voulez-vous vraiment supprimer l'abonnement <strong>{{ abonnement.plan.name }}</strong> de <strong>{{ abonnement.user.username }}</strong> ? Ses paiements seront aussi supprimés.</p>
+        </div>
+        <form method="post" class="modal-foot">
+            {% csrf_token %}
+            <a href="{% url 'abonnement:abonnement_detail' abonnement.pk %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

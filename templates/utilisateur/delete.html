@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Supprimer {{ utilisateur.username }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'utilisateur:utilisateur_list' %}">Utilisateurs</a><span class="sep">/</span>
+    <a href="{% url 'utilisateur:utilisateur_detail' utilisateur.pk %}">{{ utilisateur.username }}</a><span class="sep">/</span><span aria-current="page">Supprimer</span>
+</nav>
+
+<div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-modal">
+        <div class="modal-body">
+            <div class="modal-icon">{% include "components/_icon.html" with name="trash" %}</div>
+            <h2 id="titre-modal">Supprimer l'utilisateur</h2>
+            <p class="muted">Voulez-vous vraiment supprimer <strong>{{ utilisateur.username }}</strong> ? Cette action est définitive.</p>
+            {% if nb_projets %}
+            <div class="alert alert-warning" role="alert">{% include "components/_icon.html" with name="alert" %}<p>Ses <strong>{{ nb_projets }} projet{{ nb_projets|pluralize }}</strong> (avec les besoins, messages et diagrammes) seront aussi supprimés.</p></div>
+            {% endif %}
+            {% if erreur %}
+            <div class="alert alert-error" role="alert">{% include "components/_icon.html" with name="alert" %}<p>{{ erreur }}</p></div>
+            {% endif %}
+        </div>
+        <form method="post" class="modal-foot">
+            {% csrf_token %}
+            <a href="{% url 'utilisateur:utilisateur_detail' utilisateur.pk %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

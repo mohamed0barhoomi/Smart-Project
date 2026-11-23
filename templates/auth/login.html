@@ -1,0 +1,266 @@
+{% load static %}<!DOCTYPE html>
+{% comment %}
+  Page de connexion « lampe interactive » : page autonome (elle n'utilise pas base.html).
+  Styles : static/css/lamp_login.css · Script : static/js/lamp_login.js
+{% endcomment %}
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion · SmartProjects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/lamp_login.css' %}">
+</head>
+{# Si le formulaire revient avec des erreurs, la lampe reste allumée pour qu'on les voie #}
+<body data-on="{% if form.errors or request.method == 'POST' %}true{% else %}false{% endif %}" data-color="amber">
+  <div class="ambient-glow"></div>
+  <canvas id="dustCanvas"></canvas>
+
+  <!-- Commandes : couleur de la lumière + son -->
+  <div class="quick-controls">
+    <div class="color-palette" id="colorPalette" title="Couleur de la lumière">
+      <button type="button" class="color-dot-btn active" data-color="amber" style="--dot-color: #ffab3d;" aria-label="Lumière ambrée" title="Ambre"></button>
+      <button type="button" class="color-dot-btn" data-color="cyan" style="--dot-color: #00f0ff;" aria-label="Lumière cyan" title="Cyan"></button>
+      <button type="button" class="color-dot-btn" data-color="rose" style="--dot-color: #ff3385;" aria-label="Lumière rose" title="Rose"></button>
+      <button type="button" class="color-dot-btn" data-color="mint" style="--dot-color: #00e676;" aria-label="Lumière menthe" title="Menthe"></button>
+      <button type="button" class="color-dot-btn" data-color="moonlight" style="--dot-color: #d8e5ff;" aria-label="Clair de lune" title="Clair de lune"></button>
+    </div>
+    <button type="button" class="sound-toggle" id="soundToggle" title="Activer / couper le son" aria-label="Activer ou couper le son">
+      <svg class="sound-icon sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+      <svg class="sound-icon sound-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+    </button>
+  </div>
+
+  <main class="scene-container">
+    <!-- Lampe -->
+    <div class="lamp-stage">
+      <div class="lamp-wrapper">
+        <svg class="lamp-svg" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lampe de bureau : tirez le cordon pour l'allumer">
+          <defs>
+            <linearGradient id="metalArm" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#3e434a" />
+              <stop offset="50%" stop-color="#7a828e" />
+              <stop offset="100%" stop-color="#24272c" />
+            </linearGradient>
+            <linearGradient id="brassJoint" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffe299" />
+              <stop offset="45%" stop-color="#c99738" />
+              <stop offset="85%" stop-color="#805915" />
+              <stop offset="100%" stop-color="#f5d38a" />
+            </linearGradient>
+            <linearGradient id="shadeExterior" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#343840" />
+              <stop offset="40%" stop-color="#21252a" />
+              <stop offset="100%" stop-color="#121417" />
+            </linearGradient>
+            <linearGradient id="shadeHighlight" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0" />
+              <stop offset="42%" stop-color="#ffffff" stop-opacity="0.16" />
+              <stop offset="72%" stop-color="#ffffff" stop-opacity="0.025" />
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="shadeRim" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ffd584" />
+              <stop offset="50%" stop-color="#e2ab46" />
+              <stop offset="100%" stop-color="#996a1a" />
+            </linearGradient>
+            <radialGradient id="reflectorOff" cx="50%" cy="40%" r="70%">
+              <stop offset="0%" stop-color="#2c3036" />
+              <stop offset="55%" stop-color="#1a1d22" />
+              <stop offset="100%" stop-color="#0e1012" />
+            </radialGradient>
+            <radialGradient id="reflectorOn" cx="50%" cy="40%" r="70%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+              <stop offset="35%" stop-color="var(--lamp-glow, #ffe194)" stop-opacity="0.85" />
+              <stop offset="70%" stop-color="var(--lamp-accent, #ffab3d)" stop-opacity="0.6" />
+              <stop offset="100%" stop-color="#2a2015" stop-opacity="0.85" />
+            </radialGradient>
+            <linearGradient id="volumetricBeam" x1="0%" y1="0%" x2="90%" y2="70%">
+              <stop offset="0%" stop-color="var(--beam-start, rgba(255, 220, 130, 0.45))" />
+              <stop offset="25%" stop-color="var(--beam-mid, rgba(255, 195, 90, 0.22))" />
+              <stop offset="65%" stop-color="var(--beam-far, rgba(255, 175, 60, 0.08))" />
+              <stop offset="100%" stop-color="rgba(0, 0, 0, 0)" />
+            </linearGradient>
+            <filter id="bulbGlowFilter" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur1" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur2" />
+              <feMerge>
+                <feMergeNode in="blur2" />
+                <feMergeNode in="blur1" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="beamSoftFilter" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="8" />
+            </filter>
+          </defs>
+
+          <ellipse class="desk-shadow" cx="190" cy="460" rx="90" ry="16" fill="rgba(0, 0, 0, 0.55)" />
+
+          <g class="light-beam-group">
+            <polygon class="svg-light-beam" points="182,185 308,225 820,480 340,510" fill="url(#volumetricBeam)" filter="url(#beamSoftFilter)" />
+          </g>
+
+          <g class="lamp-base-group">
+            <ellipse cx="190" cy="445" rx="72" ry="14" fill="#15171a" />
+            <ellipse cx="190" cy="443" rx="70" ry="12" fill="url(#metalArm)" />
+            <ellipse cx="190" cy="441" rx="66" ry="10" fill="#1c1f24" />
+            <ellipse cx="190" cy="439" rx="60" ry="7" fill="none" stroke="#8e949f" stroke-opacity=".22" stroke-width=".8" />
+            <circle cx="190" cy="439" r="15" fill="url(#brassJoint)" />
+            <circle cx="190" cy="439" r="7" fill="#15171a" />
+            <circle cx="190" cy="439" r="3.2" fill="#747b86" />
+          </g>
+
+          <g class="lamp-arm-lower">
+            <line x1="186" y1="439" x2="156" y2="295" stroke="url(#metalArm)" stroke-width="4.5" stroke-linecap="round" />
+            <line x1="194" y1="439" x2="164" y2="295" stroke="url(#metalArm)" stroke-width="4.5" stroke-linecap="round" />
+            <path d="M 188 420 Q 175 360 163 305" stroke="#606670" stroke-width="2" stroke-dasharray="3,3" fill="none" opacity="0.6" />
+          </g>
+
+          <g class="lamp-elbow-joint">
+            <circle cx="160" cy="295" r="13" fill="url(#brassJoint)" />
+            <circle cx="160" cy="295" r="6" fill="#1c1f24" />
+            <circle cx="160" cy="295" r="3.3" fill="#858b94" />
+            <line x1="155" y1="295" x2="165" y2="295" stroke="url(#brassJoint)" stroke-width="2" />
+          </g>
+
+          <g class="lamp-arm-upper">
+            <line x1="160" y1="295" x2="215" y2="175" stroke="url(#metalArm)" stroke-width="5" stroke-linecap="round" />
+            <path d="M 190 439 Q 168 360 160 295 Q 190 230 215 175" stroke="#101114" stroke-width="3" fill="none" stroke-linecap="round" />
+          </g>
+
+          <g class="lamp-neck">
+            <circle cx="215" cy="175" r="11" fill="url(#brassJoint)" />
+            <rect x="209" y="162" width="16" height="15" rx="3" fill="url(#metalArm)" transform="rotate(25, 217, 169)" />
+          </g>
+
+          <g class="lamp-shade-assembly" id="shadeAssembly">
+            <path class="lamp-shade-body" d="M 182.3 184.6 C 188 135, 220 112, 248 115 C 275 118, 298 155, 307.7 225.4 A 66 22 18 0 1 182.3 184.6 Z" fill="url(#shadeExterior)" stroke="#16181b" stroke-width="1.8" />
+            <path class="shade-enamel-highlight" d="M 187 181 C 193 139, 221 119, 247 120 C 267 122, 286 144, 297 178 C 271 163, 224 153, 187 181 Z" fill="url(#shadeHighlight)" />
+            <path d="M 204 148 C 216 125, 235 119, 251 122" fill="none" stroke="#aeb5c2" stroke-opacity=".17" stroke-width="1.2" stroke-linecap="round" />
+            <ellipse class="shade-reflector-off" cx="245" cy="205" rx="66" ry="22" transform="rotate(18, 245, 205)" fill="url(#reflectorOff)" />
+            <ellipse class="shade-reflector-on" cx="245" cy="205" rx="66" ry="22" transform="rotate(18, 245, 205)" fill="url(#reflectorOn)" />
+            <ellipse class="reflector-detail" cx="245" cy="205" rx="49" ry="14" transform="rotate(18, 245, 205)" fill="none" stroke="#fff3ce" stroke-opacity=".16" stroke-width=".8" />
+            <ellipse cx="245" cy="205" rx="66" ry="22" transform="rotate(18, 245, 205)" fill="none" stroke="rgba(255, 213, 132, 0.25)" stroke-width="1" />
+            <path class="shade-rim-trim" d="M 182.3 184.6 A 66 22 18 0 0 307.7 225.4" stroke="url(#shadeRim)" stroke-width="4" fill="none" stroke-linecap="round" />
+            <g class="bulb-unit" id="bulbUnit">
+              <ellipse class="bulb-glass" cx="245" cy="195" rx="14" ry="17" transform="rotate(18, 245, 195)" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1" />
+              <path d="M 239 190 Q 242 181 247 183" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round" />
+              <path class="bulb-filament" d="M 241 189 Q 245 183 249 189" stroke="#555" stroke-width="1.8" fill="none" />
+              <circle class="bulb-glow-core" cx="245" cy="188" r="11" fill="var(--lamp-glow, #ffe194)" filter="url(#bulbGlowFilter)" opacity="0" />
+            </g>
+            <g class="cord-socket-grommet">
+              <rect x="242" y="206" width="6" height="6" rx="1.5" fill="url(#brassJoint)" stroke="#68420e" stroke-width="0.8" />
+              <circle cx="245" cy="212" r="3" fill="#ffe299" stroke="#7a5513" stroke-width="0.8" />
+              <circle cx="245" cy="212" r="1.3" fill="#181105" />
+            </g>
+          </g>
+
+          <!-- Cordon à tirer -->
+          <g class="pull-cord-system">
+            <path class="elastic-cord-path" id="elasticCord" d="M 245 212 Q 245 256 245 292" fill="none" stroke-width="2.6" stroke-linecap="round" />
+            <g class="cord-bead-group" id="cordBead" transform="translate(245 300)" tabindex="0" role="button" aria-label="Tirer le cordon pour allumer ou éteindre la lampe" aria-pressed="false">
+              <circle class="bead-aura" cx="0" cy="0" r="16" fill="var(--lamp-accent)" />
+              <path class="bead-shape" d="M -4 -8 L 4 -8 L 7 6 C 7 10, -7 10, -7 6 Z" fill="url(#brassJoint)" stroke="#7a5513" stroke-width="0.8" />
+              <ellipse cx="2" cy="0" rx="2" ry="4" fill="#fff" opacity="0.5" />
+              <circle class="cord-hit-area" cx="0" cy="0" r="32" fill="transparent" />
+            </g>
+          </g>
+        </svg>
+        <div class="cord-tooltip" id="cordTooltip">
+          <span>Tirez le cordon pour allumer</span>
+          <div class="tooltip-arrow"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire de connexion -->
+    <div class="form-stage">
+      <div class="login-card" id="loginCard">
+        <a class="card-brand" href="{% url 'utilisateur:accueil' %}">{% include "partials/logo.html" %}<span>SmartProjects</span></a>
+        <div class="card-header">
+          <h1 class="card-title">Bienvenue</h1>
+          <p class="card-subtitle">Connectez-vous pour retrouver vos projets.</p>
+        </div>
+
+        <div class="auth-tabs">
+          <a class="auth-tab active" href="{% url 'utilisateur:login' %}" aria-current="page">Connexion</a>
+          <a class="auth-tab" href="{% url 'utilisateur:inscription' %}">Créer un compte</a>
+          <div class="tab-slider"></div>
+        </div>
+
+        {# Pas d'attribut action : le formulaire est envoyé à la même adresse (le ?next=... est conservé) #}
+        <form class="auth-form" method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="form-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+            <span>{{ form.non_field_errors|join:" " }}</span>
+          </div>
+          {% endif %}
+
+          <div class="form-group">
+            <label for="id_username">Nom d'utilisateur</label>
+            <div class="input-wrapper{% if form.username.errors %} has-error{% endif %}">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" placeholder="Votre nom d'utilisateur" autocomplete="username" maxlength="150" required>
+            </div>
+            {% for erreur in form.username.errors %}<small class="field-error">{{ erreur }}</small>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="id_password">Mot de passe</label>
+            <div class="input-wrapper{% if form.password.errors %} has-error{% endif %}">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <input type="password" name="password" id="id_password" placeholder="Votre mot de passe" autocomplete="current-password" required>
+              <button type="button" class="eye-toggle" id="eyeToggle" aria-label="Afficher ou masquer le mot de passe">
+                <svg class="eye-icon eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-icon eye-hide hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            {% for erreur in form.password.errors %}<small class="field-error">{{ erreur }}</small>{% endfor %}
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <span class="btn-glow-layer"></span>
+            <span class="btn-content">
+              <span class="btn-text">Se connecter</span>
+              <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <p class="card-foot">Pas encore de compte ? <a href="{% url 'utilisateur:inscription' %}">Créer un compte</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="{% static 'js/lamp_login.js' %}"></script>
+</body>
+</html>

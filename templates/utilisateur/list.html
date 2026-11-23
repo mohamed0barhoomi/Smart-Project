@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>Utilisateurs</h1>
+        <p class="muted">{{ liste.paginator.count }} compte{{ liste.paginator.count|pluralize }}{% if filtre %} trouvé{{ liste.paginator.count|pluralize }}{% else %} sur la plateforme{% endif %}.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'utilisateur:utilisateur_create' %}" class="btn btn-primary">
+            {% include "components/_icon.html" with name="plus" %}Ajouter un utilisateur
+        </a>
+    </div>
+</div>
+
+<section class="panel">
+    <form method="get" class="filters" role="search">
+        <div class="search">
+            {% include "components/_icon.html" with name="search" %}
+            <input type="search" name="q" value="{{ recherche }}" placeholder="Rechercher par nom ou e-mail" aria-label="Rechercher par nom ou e-mail">
+        </div>
+        <select name="role" aria-label="Filtrer par rôle">
+            <option value="">Tous les rôles</option>
+            {% for code, libelle in roles %}
+                <option value="{{ code }}"{% if role == code %} selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+        </select>
+        <select name="actif" aria-label="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="1"{% if actif == '1' %} selected{% endif %}>Actifs</option>
+            <option value="0"{% if actif == '0' %} selected{% endif %}>Inactifs</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Filtrer</button>
+        {% if filtre %}<a href="{% url 'utilisateur:utilisateur_list' %}" class="btn btn-ghost btn-sm">Réinitialiser</a>{% endif %}
+    </form>
+
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>Inscrit le</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in liste %}
+                <tr>
+                    <td>
+                        <a class="cell-user" href="{% url 'utilisateur:utilisateur_detail' u.pk %}">
+                            <span class="avatar" aria-hidden="true">{{ u.username|slice:":1" }}</span>
+                            <span><strong>{{ u.username }}</strong><span class="muted small">{{ u.email }}</span></span>
+                        </a>
+                    </td>
+                    <td>{% include "components/_badge_role.html" with u=u %}</td>
+                    <td>
+                        {% if u.is_active %}<span class="badge badge-dot badge-success">Actif</span>
+                        {% else %}<span class="badge badge-dot badge-muted">Inactif</span>{% endif %}
+                    </td>
+                    <td class="nowrap">{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td class="col-actions">
+                        <div class="row-actions">
+                            <a href="{% url 'utilisateur:utilisateur_detail' u.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Voir" aria-label="Voir {{ u.username }}">{% include "components/_icon.html" with name="open" %}</a>
+                            <a href="{% url 'utilisateur:utilisateur_update' u.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Modifier" aria-label="Modifier {{ u.username }}">{% include "components/_icon.html" with name="pencil" %}</a>
+                            {% if u != user %}
+                            <form method="post" action="{% url 'utilisateur:utilisateur_toggle' u.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                {% if u.is_active %}
+                                <button type="submit" class="btn btn-ghost btn-sm btn-icon" title="Désactiver" aria-label="Désactiver {{ u.username }}">{% include "components/_icon.html" with name="power" %}</button>
+                                {% else %}
+                                <button type="submit" class="btn btn-ghost btn-sm btn-icon is-success" title="Activer" aria-label="Activer {{ u.username }}">{% include "components/_icon.html" with name="power" %}</button>
+                                {% endif %}
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'utilisateur:utilisateur_delete' u.pk %}" data-confirm-titre="Supprimer l'utilisateur" data-confirm="Voulez-vous vraiment supprimer {{ u.username }} ? Cette action est définitive.{% if u.nb_projets %} Ses {{ u.nb_projets }} projet{{ u.nb_projets|pluralize }} seront aussi supprimé{{ u.nb_projets|pluralize }}.{% endif %}" class="btn btn-ghost btn-sm btn-icon is-danger" title="Supprimer" aria-label="Supprimer {{ u.username }}">{% include "components/_icon.html" with name="trash" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-cell">
+                        <div class="empty-state">
+                            <div class="empty-icon">{% include "components/_icon.html" with name="users" %}</div>
+                            {% if filtre %}
+                            <h3>Aucun résultat</h3>
+                            <p>Aucun utilisateur ne correspond à ces critères.</p>
+                            <a href="{% url 'utilisateur:utilisateur_list' %}" class="btn btn-secondary btn-sm">Réinitialiser les filtres</a>
+                            {% else %}
+                            <h3>Aucun utilisateur</h3>
+                            <p>Ajoutez un premier compte pour commencer.</p>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "partials/pagination.html" %}
+</section>
+{% endblock %}

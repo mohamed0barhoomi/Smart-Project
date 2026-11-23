@@ -1,0 +1,142 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SMART PROJECT{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+{% with page=request.resolver_match.url_name %}
+<body class="{% if user.is_authenticated %}layout-app{% else %}layout-public{% endif %}">
+{% if user.is_authenticated %}
+    <!-- Barre latérale : uniquement les fonctionnalités déjà disponibles, selon le rôle -->
+    <aside class="sidebar">
+        <a class="sidebar-brand" href="{% url 'utilisateur:dashboard' %}">
+            <span class="brand-mark">SP</span>
+            <span class="brand-name">SMART PROJECT</span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Navigation principale">
+            <a class="nav-link{% if page == 'dashboard' %} is-active{% endif %}" href="{% url 'utilisateur:dashboard' %}">
+                {% include "components/_icon.html" with name="home" %}<span>Tableau de bord</span>
+            </a>
+
+            {% if user.is_superuser or user.role == 'ADMIN' %}
+                <div class="nav-label">Gestion</div>
+                <a class="nav-link{% if 'utilisateur_' in page %} is-active{% endif %}" href="{% url 'utilisateur:utilisateur_list' %}">
+                    {% include "components/_icon.html" with name="users" %}<span>Utilisateurs</span>
+                </a>
+                <a class="nav-link{% if 'plan_' in page %} is-active{% endif %}" href="{% url 'abonnement:plan_list' %}">
+                    {% include "components/_icon.html" with name="layers" %}<span>Plans d'abonnement</span>
+                </a>
+                <a class="nav-link{% if 'abonnement_' in page %} is-active{% endif %}" href="{% url 'abonnement:abonnement_list' %}">
+                    {% include "components/_icon.html" with name="card" %}<span>Abonnements</span>
+                </a>
+                <a class="nav-link{% if page == 'paiement_list' %} is-active{% endif %}" href="{% url 'abonnement:paiement_list' %}">
+                    {% include "components/_icon.html" with name="receipt" %}<span>Paiements</span>
+                </a>
+
+                <div class="nav-label">Compte</div>
+                <a class="nav-link{% if 'profil' in page %} is-active{% endif %}" href="{% url 'utilisateur:profil' %}">
+                    {% include "components/_icon.html" with name="user" %}<span>Mon profil</span>
+                </a>
+            {% else %}
+                <div class="nav-label">Mon espace</div>
+                <a class="nav-link{% if 'profil' in page %} is-active{% endif %}" href="{% url 'utilisateur:profil' %}">
+                    {% include "components/_icon.html" with name="user" %}<span>Mon profil</span>
+                </a>
+                {% if user.role == 'COMPANY' %}
+                <a class="nav-link" href="{% url 'utilisateur:profil' %}#entreprise">
+                    {% include "components/_icon.html" with name="building" %}<span>Profil entreprise</span>
+                </a>
+                {% endif %}
+                <a class="nav-link{% if page == 'offres' or page == 'souscrire' or page == 'paiement' %} is-active{% endif %}" href="{% url 'abonnement:offres' %}">
+                    {% include "components/_icon.html" with name="layers" %}<span>Plans</span>
+                </a>
+                <a class="nav-link{% if page == 'mon_abonnement' or page == 'annuler' %} is-active{% endif %}" href="{% url 'abonnement:mon_abonnement' %}">
+                    {% include "components/_icon.html" with name="card" %}<span>Mon abonnement</span>
+                </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="avatar" aria-hidden="true">{{ user.username|slice:":1" }}</span>
+            <div class="sidebar-user">
+                <strong>{{ user.get_full_name|default:user.username }}</strong>
+                <span>{% if user.is_superuser or user.role == 'ADMIN' %}Administrateur{% else %}{{ user.get_role_display }}{% endif %}</span>
+            </div>
+            <form method="post" action="{% url 'utilisateur:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout" title="Déconnexion" aria-label="Déconnexion">
+                    {% include "components/_icon.html" with name="logout" %}
+                </button>
+            </form>
+        </div>
+    </aside>
+{% else %}
+    <header class="public-header">
+        <a class="public-brand" href="{% url 'utilisateur:accueil' %}">
+            <span class="brand-mark">SP</span>
+            <span class="brand-name">SMART PROJECT</span>
+        </a>
+        <nav class="public-nav">
+            <a class="btn btn-ghost btn-sm{% if page == 'login' %} is-active{% endif %}" href="{% url 'utilisateur:login' %}">Connexion</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'utilisateur:inscription' %}">Créer un compte</a>
+        </nav>
+    </header>
+{% endif %}
+{% endwith %}
+
+    <main class="main">
+        <div class="main-inner">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="status">
+                    {% if message.tags == 'success' %}{% include "components/_icon.html" with name="check" %}{% elif message.tags == 'error' or message.tags == 'warning' %}{% include "components/_icon.html" with name="alert" %}{% else %}{% include "components/_icon.html" with name="info" %}{% endif %}
+                    <p>{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% if user.is_authenticated %}
+    <dialog class="modal" id="modale-confirmation" aria-labelledby="modale-titre">
+        <div class="modal-body">
+            <div class="modal-icon">{% include "components/_icon.html" with name="trash" %}</div>
+            <h2 id="modale-titre">Confirmer la suppression</h2>
+            <p class="muted" id="modale-texte"></p>
+        </div>
+        <form method="post" class="modal-foot" id="modale-formulaire">
+            {% csrf_token %}
+            <button type="submit" formmethod="dialog" formnovalidate class="btn btn-secondary">Annuler</button>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        </form>
+    </dialog>
+    <script>
+        (function () {
+            const modale = document.getElementById("modale-confirmation");
+            if (!modale || typeof modale.showModal !== "function") return;
+            document.addEventListener("click", function (evenement) {
+                const lien = evenement.target.closest("[data-confirm]");
+                if (!lien) return;
+                evenement.preventDefault();
+                document.getElementById("modale-titre").textContent = lien.dataset.confirmTitre || "Confirmer la suppression";
+                document.getElementById("modale-texte").textContent = lien.dataset.confirm;
+                document.getElementById("modale-formulaire").action = lien.href;
+                modale.showModal();
+            });
+            modale.addEventListener("click", function (evenement) {
+                if (evenement.target === modale) modale.close();
+            });
+        })();
+    </script>
+    {% endif %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

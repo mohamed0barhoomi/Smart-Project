@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Mon compte</span>
+        <h1>Mon profil</h1>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-secondary" href="{% url 'utilisateur:profil_password' %}">
+            {% include "components/_icon.html" with name="lock" %}Changer mon mot de passe
+        </a>
+        <a class="btn btn-primary" href="{% url 'utilisateur:profil_update' %}">
+            {% include "components/_icon.html" with name="pencil" %}Modifier mes informations
+        </a>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="identity">
+        <span class="avatar avatar-lg" aria-hidden="true">{{ user.username|slice:":1" }}</span>
+        <div>
+            <h2>{{ user.get_full_name|default:user.username }}</h2>
+            <p class="muted small">@{{ user.username }} · {{ user.email }}</p>
+        </div>
+        {% include "components/_badge_role.html" with u=user %}
+    </div>
+    <dl class="info-strip">
+        <div><dt>Nom d'utilisateur</dt><dd>{{ user.username }}</dd></div>
+        <div><dt>Prénom</dt><dd>{{ user.first_name|default:"—" }}</dd></div>
+        <div><dt>Nom</dt><dd>{{ user.last_name|default:"—" }}</dd></div>
+        <div><dt>E-mail</dt><dd>{{ user.email }}</dd></div>
+        <div><dt>Membre depuis</dt><dd>{{ user.date_joined|date:'d/m/Y' }}</dd></div>
+    </dl>
+</section>
+
+{% if user.role == 'COMPANY' %}
+<section class="panel" id="entreprise">
+    <div class="panel-head">
+        <div>
+            <h2 class="section-title">Profil entreprise</h2>
+            <p class="muted small">Ces informations servent à recommander votre entreprise aux clients.</p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="{% url 'utilisateur:profil_update' %}">
+            {% include "components/_icon.html" with name="pencil" %}Modifier
+        </a>
+    </div>
+    <dl class="info-strip">
+        <div><dt>Entreprise</dt><dd>{{ user.company_name|default:"—" }}</dd></div>
+        <div class="is-wide"><dt>Description</dt><dd>{{ user.company_description|default:"—"|linebreaksbr }}</dd></div>
+    </dl>
+</section>
+{% endif %}
+{% endblock %}

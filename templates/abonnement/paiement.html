@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Paiement{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'abonnement:offres' %}">Plans</a><span class="sep">/</span>
+    <a href="{% url 'abonnement:souscrire' abonnement.plan.pk %}">{{ abonnement.plan.name }}</a><span class="sep">/</span><span aria-current="page">Paiement</span>
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Étape 2 sur 2 · Paiement</span>
+        <h1>Paiement</h1>
+    </div>
+</div>
+
+<div class="grid-2">
+    <form method="post" class="panel" novalidate>
+        {% csrf_token %}
+        <div class="panel-head">
+            <h2 class="section-title">Carte bancaire</h2>
+            <span class="badge badge-muted">Paiement simulé</span>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-info">
+                {% include "components/_icon.html" with name="info" %}
+                <p>Aucune somme n'est prélevée et les données de carte ne sont pas enregistrées. Carte acceptée : 4242 4242 4242 4242. Carte refusée : 4000 0000 0000 0002. Avec une date future et le CVV 123.</p>
+            </div>
+            {% include "partials/form_fields_ext.html" %}
+        </div>
+        <div class="panel-foot">
+            <a href="{% url 'abonnement:offres' %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">{% include "components/_icon.html" with name="lock" %}Payer {{ abonnement.plan.price }} DT</button>
+        </div>
+    </form>
+
+    <aside class="panel">
+        <div class="panel-head"><h2 class="section-title">Récapitulatif</h2></div>
+        <dl class="info-strip">
+            <div class="is-wide"><dt>Plan</dt><dd>{{ abonnement.plan.name }}</dd></div>
+            <div class="is-wide"><dt>Durée</dt><dd>{{ abonnement.plan.duration_days }} jours</dd></div>
+            <div class="is-wide"><dt>Total</dt><dd><strong style="font-size: 20px;">{{ abonnement.plan.price }} DT</strong></dd></div>
+        </dl>
+    </aside>
+</div>
+{% endblock %}

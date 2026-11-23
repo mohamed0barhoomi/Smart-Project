@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     {# {% static %} construit le bon chemin vers le dossier static/ #}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {# Styles des pages Utilisateurs / Abonnements (reprend les couleurs de style.css) #}
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
 {% comment %} ------------------------------------------------------------------
@@ -18,17 +20,19 @@
    écrits une seule fois, ici.
    ------------------------------------------------------------------ {% endcomment %}
 {% block body %}
+{% with page=request.resolver_match.url_name ns=request.resolver_match.namespace %}
+{% if user.is_authenticated %}
 <div class="layout">
 
     <aside class="sidebar">
-        <a href="{% url 'projet_list' %}" class="brand">
+        <a href="{% url 'utilisateur:dashboard' %}" class="brand">
             {% include "partials/logo.html" %}
             SmartProjects
         </a>
 
         <nav class="nav-section">
             <div class="nav-label">Espace</div>
-            <a href="{% url 'projet_list' %}" class="nav-link {% if not projet %}active{% endif %}">Mes projets</a>
+            <a href="{% url 'projet_list' %}" class="nav-link {% if not projet and page == 'projet_list' %}active{% endif %}">Mes projets</a>
             <a href="{% url 'projet_create' %}" class="nav-link">Nouveau projet</a>
         </nav>
 
@@ -50,6 +54,27 @@
         </nav>
         {% endif %}
 
+        {# Utilisateurs et abonnements, selon le rôle #}
+        {% if user.is_superuser or user.role == 'ADMIN' %}
+        <nav class="nav-section">
+            <div class="nav-label">Gestion</div>
+            <a href="{% url 'utilisateur:utilisateur_list' %}" class="nav-link {% if 'utilisateur_' in page %}active{% endif %}">Utilisateurs</a>
+            <a href="{% url 'abonnement:plan_list' %}" class="nav-link {% if 'plan_' in page %}active{% endif %}">Plans d'abonnement</a>
+            <a href="{% url 'abonnement:abonnement_list' %}" class="nav-link {% if 'abonnement_' in page %}active{% endif %}">Abonnements</a>
+            <a href="{% url 'abonnement:paiement_list' %}" class="nav-link {% if page == 'paiement_list' %}active{% endif %}">Paiements</a>
+        </nav>
+        {% else %}
+        <nav class="nav-section">
+            <div class="nav-label">Mon compte</div>
+            <a href="{% url 'abonnement:offres' %}" class="nav-link {% if page == 'offres' or page == 'souscrire' or page == 'paiement' %}active{% endif %}">Plans</a>
+            <a href="{% url 'abonnement:mon_abonnement' %}" class="nav-link {% if page == 'mon_abonnement' or page == 'annuler' %}active{% endif %}">Mon abonnement</a>
+            {% if user.role == 'COMPANY' %}<a href="{% url 'utilisateur:profil' %}#entreprise" class="nav-link">Profil entreprise</a>{% endif %}
+        </nav>
+        {% endif %}
+        <nav class="nav-section">
+            <a href="{% url 'utilisateur:profil' %}" class="nav-link {% if 'profil' in page %}active{% endif %}">Mon profil</a>
+        </nav>
+
         <div class="sidebar-footer">
             <div class="user">
                 <span class="avatar">{{ user.username|first }}</span>
@@ -63,7 +88,21 @@
         </div>
     </aside>
 
-    <main class="main">
+{% else %}
+{# Visiteur non connecté (accueil, connexion, inscription) : mêmes blocs, sans barre latérale #}
+<header class="public-header">
+    <a class="brand" href="{% url 'utilisateur:accueil' %}">
+        {% include "partials/logo.html" %}
+        SmartProjects
+    </a>
+    <nav class="public-nav">
+        <a class="btn btn-sm" href="{% url 'utilisateur:login' %}">Connexion</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'utilisateur:inscription' %}">Créer un compte</a>
+    </nav>
+</header>
+{% endif %}
+
+    <main class="main{% if ns == 'utilisateur' or ns == 'abonnement' %} ext{% endif %}{% if not user.is_authenticated %} public-main{% endif %}">
         {% block breadcrumb %}{% endblock %}
 
         {# Messages flash envoyés par les vues avec messages.success(...) / messages.error(...) #}
@@ -73,8 +112,43 @@
 
         {% block content %}{% endblock %}
     </main>
-</div>
+{% if user.is_authenticated %}</div>{% endif %}
+{% endwith %}
 {% endblock %}
+
+{% if user.is_authenticated %}
+{# Fenêtre de confirmation de suppression : se déclenche sur les liens avec data-confirm="..." #}
+<dialog class="modal" id="modale-confirmation" aria-labelledby="modale-titre">
+    <div class="modal-body">
+        <div class="modal-icon">{% include "components/_icon.html" with name="trash" %}</div>
+        <h2 id="modale-titre">Confirmer la suppression</h2>
+        <p class="muted" id="modale-texte"></p>
+    </div>
+    <form method="post" class="modal-foot" id="modale-formulaire">
+        {% csrf_token %}
+        <button type="submit" formmethod="dialog" formnovalidate class="btn">Annuler</button>
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+    </form>
+</dialog>
+<script>
+    (function () {
+        const modale = document.getElementById("modale-confirmation");
+        if (!modale || typeof modale.showModal !== "function") return;
+        document.addEventListener("click", function (evenement) {
+            const lien = evenement.target.closest("[data-confirm]");
+            if (!lien) return;
+            evenement.preventDefault();
+            document.getElementById("modale-titre").textContent = lien.dataset.confirmTitre || "Confirmer la suppression";
+            document.getElementById("modale-texte").textContent = lien.dataset.confirm;
+            document.getElementById("modale-formulaire").action = lien.href;
+            modale.showModal();
+        });
+        modale.addEventListener("click", function (evenement) {
+            if (evenement.target === modale) modale.close();
+        });
+    })();
+</script>
+{% endif %}
 
 {% block scripts %}{% endblock %}
 </body>

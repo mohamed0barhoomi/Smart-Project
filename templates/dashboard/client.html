@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">{{ user.get_role_display }}{% if user.company_name %} · {{ user.company_name }}{% endif %}</span>
+        <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
+        <p class="muted">Retrouvez ici les services disponibles pour votre compte.</p>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat">
+        <span class="stat-icon">{% include "components/_icon.html" with name="layers" %}</span>
+        <div>
+            <div class="stat-label">Mes projets</div>
+            <div class="stat-value">{{ nb_projets }}</div>
+            <div class="stat-sub"><a href="{% url 'projet_list' %}">Voir mes projets</a></div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-success">{% include "components/_icon.html" with name="card" %}</span>
+        <div>
+            <div class="stat-label">Mon abonnement</div>
+            {% if abonnement %}
+            <div class="stat-value">{{ abonnement.plan.name }}</div>
+            <div class="stat-sub">{% include "components/_badge_statut.html" with code=abonnement.payment_status libelle=abonnement.get_payment_status_display %}{% if abonnement.end_date %} jusqu'au {{ abonnement.end_date|date:"d/m/Y" }}{% endif %}</div>
+            {% else %}
+            <div class="stat-value">Aucun</div>
+            <div class="stat-sub"><a href="{% url 'abonnement:offres' %}">Choisir un plan</a></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="module-grid">
+    {% for module in modules %}
+    <div class="panel module-card">
+        <div class="module-top">
+            <span class="stat-icon">{% include "components/_icon.html" with name=module.icone %}</span>
+        </div>
+        <h3>{{ module.titre }}</h3>
+        <p>{{ module.description }}</p>
+        <a href="{% url module.url %}" class="btn btn-secondary btn-sm">Ouvrir {% include "components/_icon.html" with name="arrow-right" %}</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

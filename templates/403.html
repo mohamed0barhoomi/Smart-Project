@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Accès refusé{% endblock %}
+{% block content %}
+<div class="panel auth-panel">
+    <div class="panel-body">
+        <div class="auth-head">
+            <span class="auth-icon">{% include "components/_icon.html" with name="lock" %}</span>
+            <h1>Accès refusé</h1>
+            <p class="muted">Cette page est réservée aux administrateurs.</p>
+        </div>
+        <a href="{% url 'utilisateur:dashboard' %}" class="btn btn-primary btn-block">Retour au tableau de bord</a>
+    </div>
+</div>
+{% endblock %}

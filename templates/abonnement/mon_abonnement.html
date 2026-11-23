@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Mon abonnement{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Mon espace</span>
+        <h1>Mon abonnement</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'abonnement:offres' %}" class="btn btn-secondary">
+            {% include "components/_icon.html" with name="layers" %}Voir les plans
+        </a>
+    </div>
+</div>
+
+{% if en_attente %}
+<div class="alert alert-warning mb-20">
+    {% include "components/_icon.html" with name="alert" %}
+    <p>Votre changement vers le plan <strong>{{ en_attente.plan.name }}</strong> attend son paiement. <a href="{% url 'abonnement:paiement' en_attente.pk %}">Finaliser le paiement</a></p>
+</div>
+{% endif %}
+
+{% if abonnement %}
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <span class="eyebrow">Abonnement en cours</span>
+            <h2 class="section-title">{{ abonnement.plan.name }}</h2>
+            <p class="muted small">{{ abonnement.plan.price }} DT / {{ abonnement.plan.duration_days }} jours</p>
+        </div>
+        <div class="page-actions">
+            {% include "components/_badge_statut.html" with code=abonnement.status libelle=abonnement.get_status_display %}
+            {% include "components/_badge_statut.html" with code=abonnement.payment_status libelle=abonnement.get_payment_status_display %}
+        </div>
+    </div>
+    <dl class="info-strip">
+        {% if abonnement.payment_status == 'PAID' %}
+        <div><dt>Début</dt><dd>{{ abonnement.start_date|date:"d/m/Y" }}</dd></div>
+        <div><dt>Fin</dt><dd>{{ abonnement.end_date|date:"d/m/Y" }}</dd></div>
+        <div><dt>Temps restant</dt><dd>encore {{ jours_restants }} jour{{ jours_restants|pluralize }}</dd></div>
+        {% else %}
+        <div class="is-wide"><dt>Paiement</dt><dd>Votre abonnement démarrera dès que le paiement sera effectué.</dd></div>
+        {% endif %}
+    </dl>
+    <div class="panel-foot">
+        <a href="{% url 'abonnement:annuler' %}" class="btn btn-ghost is-danger">Annuler</a>
+        <span class="spacer"></span>
+        {% if abonnement.payment_status == 'PENDING' %}
+            <a href="{% url 'abonnement:paiement' abonnement.pk %}" class="btn btn-primary">{% include "components/_icon.html" with name="card" %}Finaliser le paiement</a>
+        {% else %}
+            <a href="{% url 'abonnement:offres' %}" class="btn btn-primary">{% include "components/_icon.html" with name="layers" %}Changer de plan</a>
+        {% endif %}
+    </div>
+</section>
+{% else %}
+<section class="panel">
+    <div class="empty-state">
+        <div class="empty-icon">{% include "components/_icon.html" with name="card" %}</div>
+        <h3>Pas encore d'abonnement</h3>
+        <p>Vous n'avez aucun abonnement en cours.</p>
+        <a href="{% url 'abonnement:offres' %}" class="btn btn-primary">Voir les plans</a>
+    </div>
+</section>
+{% endif %}
+
+{% if historique %}
+<section class="panel">
+    <div class="panel-head"><h2 class="section-title">Historique des abonnements</h2></div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr><th>Plan</th><th>Début</th><th>Fin</th><th>Statut</th><th>Paiement</th></tr>
+            </thead>
+            <tbody>
+                {% for a in historique %}
+                <tr>
+                    <td><strong>{{ a.plan.name }}</strong></td>
+                    <td class="nowrap">{{ a.start_date|date:"d/m/Y" }}</td>
+                    <td class="nowrap">{{ a.end_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td>{% include "components/_badge_statut.html" with code=a.status libelle=a.get_status_display %}</td>
+                    <td>{% include "components/_badge_statut.html" with code=a.payment_status libelle=a.get_payment_status_display %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+{% if paiements %}
+<section class="panel">
+    <div class="panel-head"><h2 class="section-title">Historique des paiements</h2></div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr><th>Date</th><th>Plan</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+                {% for p in paiements %}
+                <tr>
+                    <td class="nowrap">{{ p.date|date:"d/m/Y H:i" }}</td>
+                    <td>{{ p.subscription.plan.name }}</td>
+                    <td class="nowrap"><strong>{{ p.amount }} DT</strong></td>
+                    <td>{{ p.get_method_display }}</td>
+                    <td>{% include "components/_badge_statut.html" with code=p.status libelle=p.get_status_display %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

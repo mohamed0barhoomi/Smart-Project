@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}SMART PROJECT{% endblock %}
+{% block content %}
+<section class="panel hero">
+    <span class="eyebrow">De l'idée au projet logiciel</span>
+    <h1>Transformez votre idée en projet logiciel structuré</h1>
+    <p class="muted hero-lead">Décrivez votre idée : l'IA génère les besoins et les diagrammes UML, estime le coût et le délai, puis vous recommande l'entreprise la plus adaptée.</p>
+
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'utilisateur:inscription' %}">
+            {% include "components/_icon.html" with name="plus" %}Créer un compte
+        </a>
+        <a class="btn btn-secondary" href="{% url 'utilisateur:login' %}">Se connecter</a>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <span class="stat-icon">{% include "components/_icon.html" with name="layers" %}</span>
+            <h3>Besoins et UML par l'IA</h3>
+            <p class="muted small">Générés à partir de votre description.</p>
+        </div>
+        <div class="feature">
+            <span class="stat-icon">{% include "components/_icon.html" with name="calendar" %}</span>
+            <h3>Coût et délai</h3>
+            <p class="muted small">Une estimation claire de votre projet.</p>
+        </div>
+        <div class="feature">
+            <span class="stat-icon">{% include "components/_icon.html" with name="building" %}</span>
+            <h3>Entreprises recommandées</h3>
+            <p class="muted small">Selon leurs compétences et leurs tarifs.</p>
+        </div>
+        <div class="feature">
+            <span class="stat-icon">{% include "components/_icon.html" with name="check" %}</span>
+            <h3>Suivi Scrum</h3>
+            <p class="muted small">Backlog, sprints et avancement.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

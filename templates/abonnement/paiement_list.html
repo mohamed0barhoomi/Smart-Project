@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Paiements{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>Paiements</h1>
+        <p class="muted">{{ liste.paginator.count }} paiement{{ liste.paginator.count|pluralize }}{% if statut %} avec ce statut{% endif %}.</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="section-title">Historique des paiements</h2>
+        <nav class="segmented" aria-label="Filtrer par statut">
+            <a href="{% url 'abonnement:paiement_list' %}"{% if not statut %} class="is-active"{% endif %}>Tous</a>
+            {% for code, libelle in statuts %}
+                <a href="?statut={{ code }}"{% if statut == code %} class="is-active"{% endif %}>{{ libelle }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Abonnement</th>
+                    <th>Montant</th>
+                    <th>Méthode</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in liste %}
+                <tr>
+                    <td>
+                        <a class="cell-user" href="{% url 'utilisateur:utilisateur_detail' p.subscription.user.pk %}">
+                            <span class="avatar" aria-hidden="true">{{ p.subscription.user.username|slice:":1" }}</span>
+                            <span><strong>{{ p.subscription.user.username }}</strong><span class="muted small">{{ p.subscription.user.email }}</span></span>
+                        </a>
+                    </td>
+                    <td><a href="{% url 'abonnement:abonnement_detail' p.subscription.pk %}">{{ p.subscription.plan.name }}</a></td>
+                    <td class="nowrap"><strong>{{ p.amount }} DT</strong></td>
+                    <td>{{ p.get_method_display }}</td>
+                    <td class="nowrap">{{ p.date|date:"d/m/Y H:i" }}</td>
+                    <td>{% include "components/_badge_statut.html" with code=p.status libelle=p.get_status_display %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-cell">
+                        <div class="empty-state">
+                            <div class="empty-icon">{% include "components/_icon.html" with name="receipt" %}</div>
+                            <h3>Aucun paiement</h3>
+                            <p>Les paiements des clients apparaîtront ici.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "partials/pagination.html" %}
+</section>
+{% endblock %}

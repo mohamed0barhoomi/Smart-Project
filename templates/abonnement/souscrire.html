@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Choisir le plan {{ plan.name }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'abonnement:offres' %}">Plans</a><span class="sep">/</span><span aria-current="page">{{ plan.name }}</span>
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Étape 1 sur 2 · Récapitulatif</span>
+        <h1>{% if en_cours.payment_status == 'PAID' %}Passer au plan {{ plan.name }}{% else %}Souscrire au plan {{ plan.name }}{% endif %}</h1>
+    </div>
+</div>
+
+{% if en_cours.payment_status == 'PAID' %}
+<div class="alert alert-info mb-20 is-narrow">
+    {% include "components/_icon.html" with name="info" %}
+    <p>Après le paiement, ce plan remplacera votre plan actuel <strong>{{ en_cours.plan.name }}</strong>, qui sera annulé.</p>
+</div>
+{% endif %}
+
+<section class="panel is-narrow">
+    <dl class="info-strip">
+        <div><dt>Prix</dt><dd>{{ plan.price }} DT</dd></div>
+        <div><dt>Durée</dt><dd>{{ plan.duration_days }} jours</dd></div>
+        <div class="is-wide"><dt>Début</dt><dd>Le jour du paiement</dd></div>
+        <div class="is-wide"><dt>Description</dt><dd>{{ plan.description|default:"—"|linebreaksbr }}</dd></div>
+    </dl>
+    <form method="post" class="panel-foot">
+        {% csrf_token %}
+        <a href="{% url 'abonnement:offres' %}" class="btn btn-secondary">Retour aux plans</a>
+        <button type="submit" class="btn btn-primary">Continuer vers le paiement {% include "components/_icon.html" with name="arrow-right" %}</button>
+    </form>
+</section>
+{% endblock %}

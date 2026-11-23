@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord administrateur{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Administration</span>
+        <h1>Tableau de bord</h1>
+        <p class="muted">Bonjour {{ user.first_name|default:user.username }}, voici l'activité de la plateforme.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="{% url 'utilisateur:utilisateur_create' %}">
+            {% include "components/_icon.html" with name="plus" %}Ajouter un utilisateur
+        </a>
+    </div>
+</div>
+
+<div class="stats is-4">
+    <div class="stat">
+        <span class="stat-icon">{% include "components/_icon.html" with name="users" %}</span>
+        <div>
+            <div class="stat-label">Utilisateurs</div>
+            <div class="stat-value">{{ nb_total }}</div>
+            <div class="stat-sub">{{ nb_particuliers }} particulier{{ nb_particuliers|pluralize }} · {{ nb_admins }} admin{{ nb_admins|pluralize }}</div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-company">{% include "components/_icon.html" with name="building" %}</span>
+        <div>
+            <div class="stat-label">Entreprises</div>
+            <div class="stat-value">{{ nb_entreprises }}</div>
+            <div class="stat-sub">Clients entreprise</div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-success">{% include "components/_icon.html" with name="card" %}</span>
+        <div>
+            <div class="stat-label">Abonnements actifs</div>
+            <div class="stat-value">{{ nb_abonnements_actifs }}</div>
+            <div class="stat-sub"><a href="{% url 'abonnement:abonnement_list' %}?statut=ACTIVE">Voir la liste</a></div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-warning">{% include "components/_icon.html" with name="trending" %}</span>
+        <div>
+            <div class="stat-label">Revenus du mois</div>
+            <div class="stat-value">{{ revenus_du_mois|floatformat:2 }} <span class="stat-unit">DT</span></div>
+            <div class="stat-sub"><a href="{% url 'abonnement:paiement_list' %}?statut=PAID">Paiements reçus</a></div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="section-title">Derniers inscrits</h2>
+            <a class="btn btn-ghost btn-sm" href="{% url 'utilisateur:utilisateur_list' %}">Voir tout {% include "components/_icon.html" with name="arrow-right" %}</a>
+        </div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr><th>Utilisateur</th><th>Rôle</th><th>Inscrit le</th></tr>
+                </thead>
+                <tbody>
+                    {% for u in derniers %}
+                    <tr>
+                        <td>
+                            <a class="cell-user" href="{% url 'utilisateur:utilisateur_detail' u.pk %}">
+                                <span class="avatar" aria-hidden="true">{{ u.username|slice:":1" }}</span>
+                                <span><strong>{{ u.username }}</strong><span class="muted small">{{ u.email }}</span></span>
+                            </a>
+                        </td>
+                        <td>{% include "components/_badge_role.html" with u=u %}</td>
+                        <td class="nowrap">{{ u.date_joined|date:'d/m/Y' }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="empty-cell"><div class="empty-state"><p>Aucun utilisateur.</p></div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Gestion</h2></div>
+        <ul class="link-list">
+            <li><a href="{% url 'utilisateur:utilisateur_list' %}">{% include "components/_icon.html" with name="users" %}Gérer les utilisateurs<svg class="icon arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li>
+            <li><a href="{% url 'abonnement:plan_list' %}">{% include "components/_icon.html" with name="layers" %}Plans d'abonnement<svg class="icon arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li>
+            <li><a href="{% url 'abonnement:abonnement_list' %}">{% include "components/_icon.html" with name="card" %}Abonnements des clients<svg class="icon arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li>
+            <li><a href="{% url 'abonnement:paiement_list' %}">{% include "components/_icon.html" with name="receipt" %}Paiements<svg class="icon arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li>
+        </ul>
+    </section>
+</div>
+{% endblock %}

@@ -31,6 +31,8 @@ INSTALLED_APPS = [
     "Chat_App",         # chat + génération IA
     "Besoin_App",       # CRUD des besoins fonctionnels / non fonctionnels
     "Diagramme_App",    # CRUD des diagrammes (cas d'utilisation, classes)
+    "UtilisateursApp",  # utilisateur personnalisé (rôles), profil, tableau de bord
+    "AbonnementsApp",   # plans, abonnements, paiements
 ]
 
 MIDDLEWARE = [
@@ -88,9 +90,10 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentification : où aller pour se connecter, et après connexion/déconnexion
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "projet_list"
-LOGOUT_REDIRECT_URL = "login"
+AUTH_USER_MODEL = "UtilisateursApp.User"   # utilisateur avec rôle (USER / COMPANY / ADMIN)
+LOGIN_URL = "utilisateur:login"
+LOGIN_REDIRECT_URL = "utilisateur:dashboard"
+LOGOUT_REDIRECT_URL = "utilisateur:login"
 
 
 # ---------------------------------------------------------------------------

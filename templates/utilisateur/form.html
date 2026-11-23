@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier {{ object.username }}{% else %}Ajouter un utilisateur{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'utilisateur:utilisateur_list' %}">Utilisateurs</a><span class="sep">/</span>
+    {% if object %}
+        <a href="{% url 'utilisateur:utilisateur_detail' object.pk %}">{{ object.username }}</a><span class="sep">/</span><span aria-current="page">Modifier</span>
+    {% else %}
+        <span aria-current="page">Ajouter</span>
+    {% endif %}
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>{% if object %}Modifier l'utilisateur {{ object.username }}{% else %}Ajouter un utilisateur{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post" class="panel" autocomplete="off" novalidate>
+    {% csrf_token %}
+    <div class="panel-body">
+        {% include "partials/form_fields_ext.html" %}
+    </div>
+    <div class="panel-foot">
+        {% if object %}
+        <a href="{% url 'utilisateur:utilisateur_password' object.pk %}" class="btn btn-ghost">{% include "components/_icon.html" with name="lock" %}Réinitialiser le mot de passe</a>
+        <span class="spacer"></span>
+        {% endif %}
+        <a href="{% if object %}{% url 'utilisateur:utilisateur_detail' object.pk %}{% else %}{% url 'utilisateur:utilisateur_list' %}{% endif %}" class="btn btn-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{% include "partials/champs_entreprise.js.html" %}
+{% endblock %}

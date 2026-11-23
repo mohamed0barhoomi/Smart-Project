@@ -1,0 +1,19 @@
+{% if form.errors %}
+<div class="alert alert-error" role="alert">
+    {% include "components/_icon.html" with name="alert" %}
+    <div>
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% empty %}<p>Le formulaire contient des erreurs : corrigez les champs en rouge.</p>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="form-grid{% if single %} single{% endif %}">
+    {% for field in form %}
+    <div id="bloc-{{ field.name }}" class="field{% if field.widget_type == 'textarea' or single %} full{% endif %}{% if field.widget_type == 'checkbox' %} is-checkbox{% endif %}{% if field.errors %} has-error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required" aria-hidden="true">*</span>{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+    </div>
+    {% endfor %}
+</div>

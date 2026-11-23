@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Abonnements{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>Abonnements des clients</h1>
+        <p class="muted">{{ liste.paginator.count }} abonnement{{ liste.paginator.count|pluralize }}{% if statut %} avec ce statut{% endif %}.</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="section-title">Liste des abonnements</h2>
+        <nav class="segmented" aria-label="Filtrer par statut">
+            <a href="{% url 'abonnement:abonnement_list' %}"{% if not statut %} class="is-active"{% endif %}>Tous</a>
+            {% for code, libelle in statuts %}
+                <a href="?statut={{ code }}"{% if statut == code %} class="is-active"{% endif %}>{{ libelle }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Plan</th>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th>Statut</th>
+                    <th>Paiement</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in liste %}
+                <tr>
+                    <td>
+                        <a class="cell-user" href="{% url 'utilisateur:utilisateur_detail' a.user.pk %}">
+                            <span class="avatar" aria-hidden="true">{{ a.user.username|slice:":1" }}</span>
+                            <span><strong>{{ a.user.username }}</strong><span class="muted small">{{ a.user.email }}</span></span>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'abonnement:plan_detail' a.plan.pk %}"><strong>{{ a.plan.name }}</strong></a>
+                        <div class="muted small">{{ a.plan.price }} DT</div>
+                    </td>
+                    <td class="nowrap">{{ a.start_date|date:"d/m/Y" }}</td>
+                    <td class="nowrap">{{ a.end_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td>{% include "components/_badge_statut.html" with code=a.status libelle=a.get_status_display %}</td>
+                    <td>{% include "components/_badge_statut.html" with code=a.payment_status libelle=a.get_payment_status_display %}</td>
+                    <td class="col-actions">
+                        <div class="row-actions">
+                            <a href="{% url 'abonnement:abonnement_detail' a.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Voir" aria-label="Voir l'abonnement de {{ a.user.username }}">{% include "components/_icon.html" with name="open" %}</a>
+                            <a href="{% url 'abonnement:abonnement_update' a.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Modifier le statut" aria-label="Modifier l'abonnement de {{ a.user.username }}">{% include "components/_icon.html" with name="pencil" %}</a>
+                            <a href="{% url 'abonnement:abonnement_delete' a.pk %}" data-confirm-titre="Supprimer l'abonnement" data-confirm="Voulez-vous vraiment supprimer l'abonnement {{ a.plan.name }} de {{ a.user.username }} ? Ses paiements seront aussi supprimés." class="btn btn-ghost btn-sm btn-icon is-danger" title="Supprimer" aria-label="Supprimer l'abonnement de {{ a.user.username }}">{% include "components/_icon.html" with name="trash" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-cell">
+                        <div class="empty-state">
+                            <div class="empty-icon">{% include "components/_icon.html" with name="card" %}</div>
+                            <h3>Aucun abonnement</h3>
+                            <p>Les souscriptions des clients apparaîtront ici.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "partials/pagination.html" %}
+</section>
+{% endblock %}

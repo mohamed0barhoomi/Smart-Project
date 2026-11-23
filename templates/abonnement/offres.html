@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Plans{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Abonnement</span>
+        <h1>Plans</h1>
+        <p class="muted">Choisissez le plan qui correspond à votre projet.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'abonnement:mon_abonnement' %}" class="btn btn-secondary">
+            {% include "components/_icon.html" with name="card" %}Mon abonnement
+        </a>
+    </div>
+</div>
+
+{% if en_attente %}
+    <div class="alert alert-warning mb-20">
+        {% include "components/_icon.html" with name="alert" %}
+        <p>Votre changement vers le plan <strong>{{ en_attente.plan.name }}</strong> attend son paiement. <a href="{% url 'abonnement:paiement' en_attente.pk %}">Finaliser le paiement</a></p>
+    </div>
+{% elif en_cours.payment_status == 'PAID' %}
+    <div class="alert alert-info mb-20">
+        {% include "components/_icon.html" with name="info" %}
+        <p>Votre plan actuel est <strong>{{ en_cours.plan.name }}</strong>, jusqu'au {{ en_cours.end_date|date:"d/m/Y" }}. Choisissez un autre plan pour en changer.</p>
+    </div>
+{% elif en_cours %}
+    <div class="alert alert-warning mb-20">
+        {% include "components/_icon.html" with name="alert" %}
+        <p>Votre souscription au plan <strong>{{ en_cours.plan.name }}</strong> attend son paiement. <a href="{% url 'abonnement:paiement' en_cours.pk %}">Finaliser le paiement</a></p>
+    </div>
+{% endif %}
+
+{% if liste %}
+<div class="plan-grid">
+    {% for p in liste %}
+    {% if en_cours.plan == p and en_cours.payment_status == 'PAID' %}
+    <article class="panel plan-card is-current">
+        <div>
+            <span class="badge badge-success mb-10">Votre plan actuel</span>
+            <h3>{{ p.name }}</h3>
+        </div>
+        <div class="plan-price"><strong>{{ p.price }} DT</strong><span class="muted">/ {{ p.duration_days }} jours</span></div>
+        <p class="description">{{ p.description|default:"—"|linebreaksbr }}</p>
+        <button type="button" class="btn btn-secondary btn-block" disabled>Plan actuel</button>
+    </article>
+    {% else %}
+    <article class="panel plan-card">
+        <h3>{{ p.name }}</h3>
+        <div class="plan-price"><strong>{{ p.price }} DT</strong><span class="muted">/ {{ p.duration_days }} jours</span></div>
+        <p class="description">{{ p.description|default:"—"|linebreaksbr }}</p>
+        <a href="{% url 'abonnement:souscrire' p.pk %}" class="btn btn-primary btn-block">Choisir</a>
+    </article>
+    {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel">
+    <div class="empty-state">
+        <div class="empty-icon">{% include "components/_icon.html" with name="layers" %}</div>
+        <h3>Aucun plan disponible</h3>
+        <p>Aucun plan n'est disponible pour le moment. Revenez bientôt.</p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

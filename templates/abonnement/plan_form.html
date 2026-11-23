@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier {{ object.name }}{% else %}Ajouter un plan{% endif %}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'abonnement:plan_list' %}">Plans d'abonnement</a><span class="sep">/</span>
+    {% if object %}
+        <a href="{% url 'abonnement:plan_detail' object.pk %}">{{ object.name }}</a><span class="sep">/</span><span aria-current="page">Modifier</span>
+    {% else %}
+        <span aria-current="page">Ajouter</span>
+    {% endif %}
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>{% if object %}Modifier le plan {{ object.name }}{% else %}Ajouter un plan{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post" class="panel" autocomplete="off" novalidate>
+    {% csrf_token %}
+    <div class="panel-body">
+        {% include "partials/form_fields_ext.html" %}
+    </div>
+    <div class="panel-foot">
+        <a href="{% if object %}{% url 'abonnement:plan_detail' object.pk %}{% else %}{% url 'abonnement:plan_list' %}{% endif %}" class="btn btn-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+</form>
+{% endblock %}
