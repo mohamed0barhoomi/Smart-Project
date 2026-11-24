@@ -1,24 +1,104 @@
-{% extends "base.html" %}
-{% block title %}Inscription{% endblock %}
-{% block content %}
-<div class="panel auth-panel is-wide">
-    <div class="panel-body">
-        <div class="auth-head">
-            <span class="auth-icon">{% include "components/_icon.html" with name="user" %}</span>
-            <h1>Créer un compte</h1>
-            <p class="muted">Particulier ou entreprise. L'adresse e-mail doit se terminer par @gmail.com.</p>
+{% load static %}<!DOCTYPE html>
+{% comment %}
+  Page « Créer un compte » : même ambiance que la page de connexion (fond sombre, carte vitrée, couleur
+  de lumière choisie sur la connexion), mais sans la lampe. Page autonome (elle n'utilise pas base.html).
+  Styles : static/css/lamp_login.css (classes communes avec la connexion).
+{% endcomment %}
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Créer un compte · SmartProjects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/lamp_login.css' %}">
+</head>
+<body class="page-centree" data-on="true" data-color="amber">
+  <script>
+    // même couleur que celle choisie sur la page de connexion
+    document.body.dataset.color = localStorage.getItem("lampColor") || "amber";
+  </script>
+  <div class="ambient-glow"></div>
+
+  <main class="scene-container">
+    <div class="form-stage">
+      <div class="login-card" id="loginCard">
+        <a class="card-brand" href="{% url 'utilisateur:accueil' %}">{% include "partials/logo.html" %}<span>SmartProjects</span></a>
+        <div class="card-header">
+          <h1 class="card-title">Créer un compte</h1>
+          <p class="card-subtitle">L'adresse e-mail doit se terminer par @gmail.com.</p>
         </div>
 
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {% include "partials/form_fields_ext.html" %}
-            <button type="submit" class="btn btn-primary btn-block auth-submit">Créer mon compte</button>
-        </form>
-    </div>
-    <div class="auth-foot">Déjà inscrit ? <a href="{% url 'utilisateur:login' %}">Se connecter</a></div>
-</div>
-{% endblock %}
+        <div class="auth-tabs is-register">
+          <a class="auth-tab" href="{% url 'utilisateur:login' %}">Connexion</a>
+          <a class="auth-tab active" href="{% url 'utilisateur:inscription' %}" aria-current="page">Créer un compte</a>
+          <div class="tab-slider"></div>
+        </div>
 
-{% block scripts %}
-{% include "partials/champs_entreprise.js.html" %}
-{% endblock %}
+        <form class="auth-form" method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="form-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+            <span>{{ form.non_field_errors|join:" " }}</span>
+          </div>
+          {% endif %}
+
+          <div class="form-grid-2">
+            {% for field in form %}
+            <div class="form-group{% if field.name == 'first_name' or field.name == 'last_name' %} half{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required" aria-hidden="true">*</span>{% endif %}</label>
+              <div class="input-wrapper{% if field.errors %} has-error{% endif %}">
+                {% if field.name == 'email' %}
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+                {% elif field.name == 'password1' or field.name == 'password2' %}
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                {% else %}
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                {% endif %}
+                {{ field }}
+                {% if field.name == 'password1' or field.name == 'password2' %}
+                <button type="button" class="eye-toggle" data-cible="{{ field.id_for_label }}" aria-label="Afficher ou masquer le mot de passe">
+                  <svg class="eye-icon eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg class="eye-icon eye-hide hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
+                {% endif %}
+              </div>
+              {% for erreur in field.errors %}<small class="field-error">{{ erreur }}</small>{% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="submit-btn">
+            <span class="btn-glow-layer"></span>
+            <span class="btn-content">
+              <span class="btn-text">Créer mon compte</span>
+              <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <p class="card-foot">Déjà inscrit ? <a href="{% url 'utilisateur:login' %}">Se connecter</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // afficher / masquer le mot de passe
+    document.querySelectorAll(".eye-toggle").forEach(function (bouton) {
+      bouton.addEventListener("click", function () {
+        var champ = document.getElementById(bouton.dataset.cible);
+        var afficher = champ.type === "password";
+        champ.type = afficher ? "text" : "password";
+        bouton.querySelector(".eye-show").classList.toggle("hidden", afficher);
+        bouton.querySelector(".eye-hide").classList.toggle("hidden", !afficher);
+      });
+    });
+  </script>
+</body>
+</html>

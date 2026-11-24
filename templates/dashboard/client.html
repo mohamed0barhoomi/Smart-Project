@@ -3,13 +3,14 @@
 {% block content %}
 <div class="page-head">
     <div>
-        <span class="eyebrow">{{ user.get_role_display }}{% if user.company_name %} · {{ user.company_name }}{% endif %}</span>
+        <span class="eyebrow">{{ user.get_role_display }}</span>
         <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
         <p class="muted">Retrouvez ici les services disponibles pour votre compte.</p>
     </div>
 </div>
 
 <div class="stats">
+    {% if nb_projets is not None %}
     <div class="stat">
         <span class="stat-icon">{% include "components/_icon.html" with name="layers" %}</span>
         <div>
@@ -18,6 +19,7 @@
             <div class="stat-sub"><a href="{% url 'projet_list' %}">Voir mes projets</a></div>
         </div>
     </div>
+    {% endif %}
     <div class="stat">
         <span class="stat-icon is-success">{% include "components/_icon.html" with name="card" %}</span>
         <div>

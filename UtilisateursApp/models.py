@@ -14,17 +14,13 @@ def validate_gmail(value):
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ("USER", "Client particulier"),
-        ("COMPANY", "Client entreprise"),
+        ("USER", "Client"),
         ("ADMIN", "Administrateur"),
     ]
 
     email = models.EmailField("adresse e-mail", unique=True, validators=[validate_gmail])
     role = models.CharField("rôle", max_length=10, choices=ROLE_CHOICES, default="USER")
 
-    company_name = models.CharField("nom de l'entreprise", max_length=150, blank=True)
-    company_description = models.TextField("description de l'entreprise", blank=True)
-    company_skills = models.JSONField("compétences", default=list, blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

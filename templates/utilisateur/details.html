@@ -37,12 +37,8 @@
         <div><dt>Nom</dt><dd>{{ utilisateur.last_name|default:"—" }}</dd></div>
         <div><dt>Statut</dt><dd>{% if utilisateur.is_active %}<span class="badge badge-dot badge-success">Actif</span>{% else %}<span class="badge badge-dot badge-muted">Inactif</span>{% endif %}</dd></div>
         <div><dt>Inscrit le</dt><dd>{{ utilisateur.date_joined|date:"d/m/Y H:i" }}</dd></div>
-        <div><dt>Projets</dt><dd>{{ nb_projets }}</dd></div>
+        {% if nb_projets is not None %}<div><dt>Projets</dt><dd>{{ nb_projets }}</dd></div>{% endif %}
         <div><dt>Abonnement</dt><dd>{% if abonnement %}<a href="{% url 'abonnement:abonnement_detail' abonnement.pk %}">{{ abonnement.plan.name }}</a> {% include "components/_badge_statut.html" with code=abonnement.payment_status libelle=abonnement.get_payment_status_display %}{% else %}Aucun{% endif %}</dd></div>
-        {% if utilisateur.role == "COMPANY" %}
-        <div><dt>Entreprise</dt><dd>{{ utilisateur.company_name|default:"—" }}</dd></div>
-        <div class="is-wide"><dt>Description</dt><dd>{{ utilisateur.company_description|default:"—"|linebreaksbr }}</dd></div>
-        {% endif %}
     </dl>
 </section>
 {% endblock %}

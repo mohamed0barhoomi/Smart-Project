@@ -69,7 +69,6 @@
             <div class="nav-label">Mon compte</div>
             <a href="{% url 'abonnement:offres' %}" class="nav-link {% if page == 'offres' or page == 'souscrire' or page == 'paiement' %}active{% endif %}">Plans</a>
             <a href="{% url 'abonnement:mon_abonnement' %}" class="nav-link {% if page == 'mon_abonnement' or page == 'annuler' %}active{% endif %}">Mon abonnement</a>
-            {% if user.role == 'COMPANY' %}<a href="{% url 'utilisateur:profil' %}#entreprise" class="nav-link">Profil entreprise</a>{% endif %}
         </nav>
         {% endif %}
         <nav class="nav-section">
@@ -148,6 +147,16 @@
             if (evenement.target === modale) modale.close();
         });
     })();
+</script>
+{% endif %}
+
+{% if user.is_authenticated %}
+<script>
+    // Si le navigateur ré-affiche la page depuis sa mémoire (flèche « retour »), on la recharge :
+    // après une déconnexion, le serveur renvoie alors vers la page de connexion.
+    window.addEventListener("pageshow", function (evenement) {
+        if (evenement.persisted) window.location.reload();
+    });
 </script>
 {% endif %}
 
