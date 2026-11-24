@@ -34,21 +34,4 @@
     </dl>
 </section>
 
-{% if user.role == 'COMPANY' %}
-<section class="panel" id="entreprise">
-    <div class="panel-head">
-        <div>
-            <h2 class="section-title">Profil entreprise</h2>
-            <p class="muted small">Ces informations servent à recommander votre entreprise aux clients.</p>
-        </div>
-        <a class="btn btn-secondary btn-sm" href="{% url 'utilisateur:profil_update' %}">
-            {% include "components/_icon.html" with name="pencil" %}Modifier
-        </a>
-    </div>
-    <dl class="info-strip">
-        <div><dt>Entreprise</dt><dd>{{ user.company_name|default:"—" }}</dd></div>
-        <div class="is-wide"><dt>Description</dt><dd>{{ user.company_description|default:"—"|linebreaksbr }}</dd></div>
-    </dl>
-</section>
-{% endif %}
 {% endblock %}

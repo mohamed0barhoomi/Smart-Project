@@ -8,10 +8,10 @@ from .models import User
 class UtilisateurAdmin(UserAdmin):
     list_display = ("username", "email", "role", "is_active", "date_joined")
     list_filter = ("role", "is_active")
-    search_fields = ("username", "email", "company_name")
+    search_fields = ("username", "email")
 
     fieldsets = UserAdmin.fieldsets + (
-        ("SMART PROJECT", {"fields": ("role", "company_name", "company_description", "company_skills")}),
+        ("SMART PROJECT", {"fields": ("role",)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("SMART PROJECT", {"fields": ("email", "role")}),

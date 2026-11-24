@@ -7,7 +7,9 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import NoReverseMatch, reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
 
 from AbonnementsApp.models import abonnement_en_cours, nb_abonnements_actifs, revenus_du_mois
 
@@ -36,12 +38,31 @@ def paginer(request, queryset, par_page=10):
     return page
 
 
+def _url_existe(nom):
+    """True si ce nom d'URL existe dans le projet (les apps des autres membres peuvent être absentes)."""
+    try:
+        reverse(nom)
+        return True
+    except NoReverseMatch:
+        return False
+
+
+def _projets_disponibles():
+    """True seulement si le modèle Projet des amis (related_name='projets') est installé."""
+    return any(r.get_accessor_name() == 'projets' for r in User._meta.related_objects)
+
+
+def _nb_projets(utilisateur):
+    return utilisateur.projets.count() if _projets_disponibles() else None
+
+
 def accueil(request):
     if request.user.is_authenticated:
         return redirect('utilisateur:dashboard')
     return render(request, 'accueil.html')
 
 
+@never_cache
 def connexion(request):
     if request.user.is_authenticated:
         return redirect('utilisateur:dashboard')
@@ -69,6 +90,7 @@ def deconnexion(request):
     return redirect('utilisateur:login')
 
 
+@never_cache
 def inscription(request):
     if request.user.is_authenticated:
         return redirect('utilisateur:dashboard')
@@ -76,16 +98,13 @@ def inscription(request):
     form = InscriptionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
-        entreprise = data['role'] == 'COMPANY'
         user = User.objects.create_user(
             username=data['username'],
             email=data['email'],
             password=data['password1'],
             first_name=data['first_name'],
             last_name=data['last_name'],
-            role=data['role'],
-            company_name=data['company_name'] if entreprise else '',
-            company_description=data['company_description'] if entreprise else '',
+            role='USER',   # une inscription crée toujours un client (seul l'administrateur donne le rôle ADMIN)
         )
         login(request, user)
         messages.success(request, "Bienvenue ! Votre compte a été créé avec succès.")
@@ -109,18 +128,17 @@ def dashboard(request):
     if est_admin(request.user):
         return render(request, 'dashboard/admin.html', {
             "nb_total": User.objects.count(),
-            "nb_particuliers": User.objects.filter(role='USER').count(),
-            "nb_entreprises": User.objects.filter(role='COMPANY').count(),
+            "nb_clients": User.objects.filter(role='USER').count(),
             "nb_admins": User.objects.filter(role='ADMIN').count(),
             "nb_abonnements_actifs": nb_abonnements_actifs(),
             "revenus_du_mois": revenus_du_mois(),
             "derniers": User.objects.order_by('-date_joined')[:5],
         })
-    modules = [m for m in MODULES_CLIENT if m["url"]]
+    modules = [m for m in MODULES_CLIENT if m["url"] and _url_existe(m["url"])]
     return render(request, 'dashboard/client.html', {
         "modules": modules,
         "abonnement": abonnement_en_cours(request.user),
-        "nb_projets": request.user.projets.count(),
+        "nb_projets": _nb_projets(request.user),
     })
 
 
@@ -136,21 +154,13 @@ def modifierProfil(request):
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
-        "company_name": user.company_name,
-        "company_description": user.company_description,
     })
-    if user.role != 'COMPANY':
-        del form.fields['company_name']
-        del form.fields['company_description']
 
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         user.first_name = data['first_name']
         user.last_name = data['last_name']
         user.email = data['email']
-        if user.role == 'COMPANY':
-            user.company_name = data['company_name']
-            user.company_description = data['company_description']
         user.save()
         messages.success(request, "Votre profil a été mis à jour.")
         return redirect('utilisateur:profil')
@@ -173,7 +183,10 @@ def changerMotDePasse(request):
 
 @admin_requis
 def listUtilisateurs(request):
-    utilisateurs = User.objects.annotate(nb_projets=Count('projets')).order_by('-date_joined')
+    utilisateurs = User.objects.all()
+    if _projets_disponibles():
+        utilisateurs = utilisateurs.annotate(nb_projets=Count('projets'))
+    utilisateurs = utilisateurs.order_by('-date_joined')
     recherche = request.GET.get('q', '').strip()
     role = request.GET.get('role', '')
     actif = request.GET.get('actif', '')
@@ -216,7 +229,7 @@ def detailUtilisateur(request, pk):
     utilisateur = get_object_or_404(User, pk=pk)
     return render(request, 'utilisateur/details.html', {
         "utilisateur": utilisateur,
-        "nb_projets": utilisateur.projets.count(),
+        "nb_projets": _nb_projets(utilisateur),
         "abonnement": abonnement_en_cours(utilisateur),
     })
 
@@ -233,8 +246,6 @@ def createUtilisateur(request):
             first_name=data['first_name'],
             last_name=data['last_name'],
             role=data['role'],
-            company_name=data['company_name'],
-            company_description=data['company_description'],
         )
         messages.success(request, "L'utilisateur a été ajouté.")
         return redirect('utilisateur:utilisateur_list')
@@ -251,8 +262,6 @@ def updateUtilisateur(request, pk):
         "last_name": utilisateur.last_name,
         "email": utilisateur.email,
         "role": utilisateur.role,
-        "company_name": utilisateur.company_name,
-        "company_description": utilisateur.company_description,
         "is_active": utilisateur.is_active,
     })
     if request.method == "POST" and form.is_valid():
@@ -266,8 +275,6 @@ def updateUtilisateur(request, pk):
         utilisateur.last_name = data['last_name']
         utilisateur.email = data['email']
         utilisateur.role = data['role']
-        utilisateur.company_name = data['company_name']
-        utilisateur.company_description = data['company_description']
         utilisateur.is_active = data['is_active']
         utilisateur.save()
         messages.success(request, "L'utilisateur a été modifié.")
@@ -295,11 +302,11 @@ def deleteUtilisateur(request, pk):
     if request.method == "POST":
         if utilisateur == request.user:
             return render(request, 'utilisateur/delete.html', {"utilisateur": utilisateur,
-                "nb_projets": utilisateur.projets.count(),
+                "nb_projets": _nb_projets(utilisateur),
                 "erreur": "Vous ne pouvez pas supprimer votre propre compte."})
         utilisateur.delete()
         messages.success(request, "L'utilisateur a été supprimé.")
         return redirect('utilisateur:utilisateur_list')
 
     return render(request, 'utilisateur/delete.html', {"utilisateur": utilisateur,
-                                                       "nb_projets": utilisateur.projets.count()})
+                                                       "nb_projets": _nb_projets(utilisateur)})

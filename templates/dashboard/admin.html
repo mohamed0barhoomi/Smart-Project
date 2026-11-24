@@ -14,21 +14,13 @@
     </div>
 </div>
 
-<div class="stats is-4">
+<div class="stats">
     <div class="stat">
         <span class="stat-icon">{% include "components/_icon.html" with name="users" %}</span>
         <div>
             <div class="stat-label">Utilisateurs</div>
             <div class="stat-value">{{ nb_total }}</div>
-            <div class="stat-sub">{{ nb_particuliers }} particulier{{ nb_particuliers|pluralize }} · {{ nb_admins }} admin{{ nb_admins|pluralize }}</div>
-        </div>
-    </div>
-    <div class="stat">
-        <span class="stat-icon is-company">{% include "components/_icon.html" with name="building" %}</span>
-        <div>
-            <div class="stat-label">Entreprises</div>
-            <div class="stat-value">{{ nb_entreprises }}</div>
-            <div class="stat-sub">Clients entreprise</div>
+            <div class="stat-sub">{{ nb_clients }} client{{ nb_clients|pluralize }} · {{ nb_admins }} admin{{ nb_admins|pluralize }}</div>
         </div>
     </div>
     <div class="stat">

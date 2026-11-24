@@ -286,3 +286,17 @@ body[data-on="true"] .login-card {
   .login-card { border-radius: 24px; padding: 1.8rem 1.3rem; }
   .card-title { font-size: 1.5rem; }
 }
+
+/* ---------- Page « Créer un compte » (même ambiance que la connexion, sans la lampe) ---------- */
+body.page-centree .scene-container { justify-content: center; }
+body.page-centree .form-stage { flex: 0 1 540px; }
+body.page-centree .login-card { max-width: 540px; }
+.auth-tabs.is-register .tab-slider { transform: translateX(100%); }
+.tab-slider { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.form-grid-2 .form-group { grid-column: 1 / -1; }
+.form-grid-2 .form-group.half { grid-column: auto; }
+.form-group .required { color: #ff8a8a; }
+@media (max-width: 480px) {
+  .form-grid-2 .form-group.half { grid-column: 1 / -1; }
+}

@@ -1,4 +1,7 @@
+import unittest
 from datetime import date, timedelta
+
+from django.apps import apps
 
 from django.test import TestCase
 from django.urls import reverse
@@ -14,8 +17,7 @@ class PagesDesignTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user('admin1', 'admin1@gmail.com', 'MotDePasse!123', role='ADMIN')
         self.particulier = User.objects.create_user('part1', 'part1@gmail.com', 'MotDePasse!123', role='USER')
-        self.entreprise = User.objects.create_user('ent1', 'ent1@gmail.com', 'MotDePasse!123', role='COMPANY',
-                                                   company_name='Acme', company_description='Dév web')
+        self.autre_client = User.objects.create_user('cli1', 'cli1@gmail.com', 'MotDePasse!123', role='USER')
         self.plan = SubscriptionPlan.objects.create(name='Pro', price='49.90', duration_days=30, description='Offre pro')
         self.abonnement = UserSubscription.objects.create(user=self.particulier, plan=self.plan, payment_status='PAID',
                                                           end_date=date.today() + timedelta(30))
@@ -23,14 +25,16 @@ class PagesDesignTests(TestCase):
     def verifier(self, url, sidebar=True, actif=None):
         reponse = self.client.get(url)
         self.assertEqual(reponse.status_code, 200, url)
-        if not url.endswith('/connexion/'):   # la page de connexion « lampe » a son propre CSS
+        if not url.endswith(('/connexion/', '/inscription/')):   # pages « lampe » : leur propre CSS
             self.assertContains(reponse, 'css/app.css')
         if sidebar:
             self.assertContains(reponse, 'class="sidebar"')
         else:
             self.assertNotContains(reponse, 'class="sidebar"')
         if actif:
-            self.assertRegex(reponse.content.decode(), r'href="%s" class="nav-link active"' % actif, url)
+            # tolérant aux deux balisages (projet autonome : class avant href, projet intégré : href avant class)
+            self.assertRegex(reponse.content.decode(),
+                             r'(href="%s" class="nav-link (is-)?active"|class="nav-link (is-)?active" href="%s")' % (actif, actif), url)
         return reponse
 
     def test_pages_publiques_sans_sidebar(self):
@@ -77,10 +81,10 @@ class PagesDesignTests(TestCase):
         self.verifier(reverse('abonnement:annuler'), actif=mon_abonnement)
 
     def test_parcours_paiement_client(self):
-        self.client.force_login(self.entreprise)
+        self.client.force_login(self.autre_client)
         self.verifier(reverse('abonnement:souscrire', args=[self.plan.pk]))
         self.client.post(reverse('abonnement:souscrire', args=[self.plan.pk]))
-        en_attente = UserSubscription.objects.get(user=self.entreprise)
+        en_attente = UserSubscription.objects.get(user=self.autre_client)
         reponse = self.verifier(reverse('abonnement:paiement', args=[en_attente.pk]))
         self.assertContains(reponse, 'Paiement simulé')
 
@@ -88,19 +92,31 @@ class PagesDesignTests(TestCase):
         self.client.force_login(self.particulier)
         reponse = self.client.get(reverse('utilisateur:dashboard'))
         self.assertContains(reponse, 'Mon abonnement')
-        self.assertNotContains(reponse, 'Profil entreprise')
         for nom in ['utilisateur:utilisateur_list', 'abonnement:plan_list', 'abonnement:abonnement_list']:
             self.assertNotContains(reponse, 'href="%s"' % reverse(nom))
         # Pas de modules non développés
         for texte in ['Recommandations', 'Espace Scrum', 'Bientôt']:
             self.assertNotContains(reponse, texte)
 
-    def test_menu_entreprise(self):
-        self.client.force_login(self.entreprise)
+    def test_un_seul_type_de_client(self):
+        """Il n'y a plus de « client entreprise » : seulement Client et Administrateur."""
+        self.assertEqual([code for code, _ in User.ROLE_CHOICES], ['USER', 'ADMIN'])
+        self.assertEqual(User.ROLE_CHOICES[0][1], 'Client')
+        reponse = self.client.get(reverse('utilisateur:inscription'))
+        self.assertNotContains(reponse, 'company_name')
+        self.assertNotContains(reponse, 'id_role')          # pas de choix de type de compte
+        self.assertNotContains(reponse, 'entreprise')
+        self.client.force_login(self.particulier)
         reponse = self.client.get(reverse('utilisateur:profil'))
-        self.assertContains(reponse, 'Profil entreprise')
-        self.assertContains(reponse, 'id="entreprise"')
-        self.assertContains(reponse, 'Acme')
+        self.assertNotContains(reponse, 'Profil entreprise')
+        self.assertNotContains(self.client.get(reverse('utilisateur:profil_update')), 'company_name')
+
+    def test_inscription_cree_toujours_un_client(self):
+        donnees = {'username': 'nouveau', 'email': 'nouveau@gmail.com', 'password1': 'MotDePasse!123',
+                   'password2': 'MotDePasse!123', 'role': 'ADMIN'}   # un rôle injecté par le navigateur est ignoré
+        reponse = self.client.post(reverse('utilisateur:inscription'), donnees)
+        self.assertRedirects(reponse, reverse('utilisateur:dashboard'), fetch_redirect_response=False)
+        self.assertEqual(User.objects.get(username='nouveau').role, 'USER')
 
     def test_erreurs_formulaire_en_rouge(self):
         reponse = self.client.post(reverse('utilisateur:login'), {'username': '', 'password': ''})
@@ -124,8 +140,8 @@ class GestionUtilisateursTests(TestCase):
         self.admin = User.objects.create_user('admin1', 'admin1@gmail.com', 'MotDePasse!123', role='ADMIN')
         for i in range(12):
             User.objects.create_user(f'client{i:02d}', f'client{i:02d}@gmail.com', 'x', role='USER')
-        self.ent = User.objects.create_user('acme', 'contact.acme@gmail.com', 'x', role='COMPANY',
-                                            first_name='Sarra', company_name='Acme')
+        self.ent = User.objects.create_user('acme', 'contact.acme@gmail.com', 'x', role='USER',
+                                            first_name='Sarra')
         self.inactif = User.objects.create_user('dormeur', 'dormeur@gmail.com', 'x', is_active=False)
         self.client.force_login(self.admin)
         self.url = reverse('utilisateur:utilisateur_list')
@@ -144,16 +160,16 @@ class GestionUtilisateursTests(TestCase):
         self.assertContains(self.client.get(self.url + '?q=introuvable'), 'Aucun résultat')
 
     def test_filtres_role_et_statut(self):
-        self.assertEqual(self.client.get(self.url + '?role=COMPANY').context['liste'].paginator.count, 1)
+        self.assertEqual(self.client.get(self.url + '?role=ADMIN').context['liste'].paginator.count, 1)
         self.assertEqual([u.username for u in self.client.get(self.url + '?actif=0').context['liste']], ['dormeur'])
         reponse = self.client.get(self.url + '?role=USER&actif=1&page=2')
-        self.assertEqual(reponse.context['liste'].paginator.count, 12)
+        self.assertEqual(reponse.context['liste'].paginator.count, 13)
         self.assertContains(reponse, '?role=USER&amp;actif=1&amp;page=1')
 
     def test_activer_desactiver(self):
         url = reverse('utilisateur:utilisateur_toggle', args=[self.ent.pk])
-        reponse = self.client.post(url, {'next': self.url + '?role=COMPANY'})
-        self.assertRedirects(reponse, self.url + '?role=COMPANY')
+        reponse = self.client.post(url, {'next': self.url + '?role=USER'})
+        self.assertRedirects(reponse, self.url + '?role=USER')
         self.ent.refresh_from_db()
         self.assertFalse(self.ent.is_active)
         self.client.post(url)
@@ -192,7 +208,7 @@ class DesignEtape5Tests(TestCase):
     def setUp(self):
         from AbonnementsApp.models import Paiement
         self.admin = User.objects.create_user('admin1', 'admin1@gmail.com', 'x', role='ADMIN')
-        self.ent = User.objects.create_user('acme', 'acme@gmail.com', 'x', role='COMPANY')
+        self.ent = User.objects.create_user('acme', 'acme@gmail.com', 'x', role='USER')
         plan = SubscriptionPlan.objects.create(name='Pro', price='49.90', duration_days=30)
         abonnement = UserSubscription.objects.create(user=self.ent, plan=plan, payment_status='PAID',
                                                      end_date=date.today() + timedelta(30))
@@ -203,16 +219,17 @@ class DesignEtape5Tests(TestCase):
     def test_statistiques_dashboard(self):
         reponse = self.client.get(reverse('utilisateur:dashboard'))
         self.assertEqual(str(reponse.context['revenus_du_mois']), '49.90')
-        for texte in ['Utilisateurs', 'Entreprises', 'Abonnements actifs', 'Revenus du mois', '49,90']:
+        for texte in ['Utilisateurs', 'Abonnements actifs', 'Revenus du mois', '49,90']:
             self.assertContains(reponse, texte)
+        self.assertNotContains(reponse, 'Entreprises')
 
     def test_badges_couleurs(self):
         reponse = self.client.get(reverse('abonnement:paiement_list'))
         self.assertContains(reponse, 'badge-success">Payé')
         self.assertContains(reponse, 'badge-danger">Échoué')
         reponse = self.client.get(reverse('utilisateur:utilisateur_list'))
-        self.assertContains(reponse, 'badge-company')
         self.assertContains(reponse, 'badge-dark')
+        self.assertNotContains(reponse, 'badge-company')
 
     def test_modale_sur_chaque_suppression(self):
         pages = [reverse('utilisateur:utilisateur_list'), reverse('abonnement:plan_list'),
@@ -246,12 +263,12 @@ class MotsDePasseEtModificationTests(TestCase):
         hash_admin = User.objects.get(pk=self.admin.pk).password
         reponse = self.client.post(reverse('utilisateur:utilisateur_update', args=[self.cible.pk]), {
             'username': 'cible', 'first_name': 'Nouveau', 'last_name': 'Nom', 'email': 'nouveau.cible@gmail.com',
-            'role': 'COMPANY', 'company_name': 'Acme', 'company_description': '', 'is_active': 'on'})
+            'role': 'ADMIN', 'is_active': 'on'})
         self.assertRedirects(reponse, reverse('utilisateur:utilisateur_list'))
         self.cible.refresh_from_db()
         self.admin.refresh_from_db()
         self.assertEqual((self.cible.first_name, self.cible.email, self.cible.role),
-                         ('Nouveau', 'nouveau.cible@gmail.com', 'COMPANY'))
+                         ('Nouveau', 'nouveau.cible@gmail.com', 'ADMIN'))
         self.assertEqual((self.admin.first_name, self.admin.email, self.admin.role), ('', 'admin1@gmail.com', 'ADMIN'))
         self.assertEqual(self.admin.password, hash_admin)
         self.assertTrue(self.cible.check_password(self.MDP_CLIENT))
@@ -358,6 +375,7 @@ class MotsDePasseEtModificationTests(TestCase):
         self.assertNotIn('admin1', contenu)
 
 
+@unittest.skipUnless(apps.is_installed('Projet_App'), 'projets des amis absents')
 class IntegrationEtProtectionsTests(TestCase):
     """Intégration au projet SmartProjects (projets des autres membres) et protections du CRUD."""
 
@@ -431,3 +449,45 @@ class IntegrationEtProtectionsTests(TestCase):
         self.client.force_login(autre)
         reponse = self.client.get(reverse('projet_list'))
         self.assertNotContains(reponse, 'Projet A')
+
+
+class BoutonRetourApresDeconnexionTests(TestCase):
+    """Après la déconnexion, la flèche « retour » du navigateur ne doit plus montrer de page connectée."""
+
+    def setUp(self):
+        self.user = User.objects.create_user('retour1', 'retour1@gmail.com', 'MotDePasse!123')
+
+    def test_pages_connectees_interdites_au_cache(self):
+        self.client.force_login(self.user)
+        for nom in ['utilisateur:dashboard', 'utilisateur:profil', 'abonnement:offres']:
+            reponse = self.client.get(reverse(nom))
+            cache = reponse['Cache-Control']
+            self.assertIn('no-store', cache, nom)
+            self.assertIn('no-cache', cache, nom)
+            self.assertIn('must-revalidate', cache, nom)
+
+    @unittest.skipUnless(apps.is_installed('Projet_App'), 'projets des amis absents')
+    def test_pages_des_autres_apps_aussi(self):
+        self.client.force_login(self.user)
+        self.assertIn('no-store', self.client.get(reverse('projet_list'))['Cache-Control'])
+
+    def test_apres_deconnexion_la_page_redirige_vers_la_connexion(self):
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(reverse('utilisateur:dashboard')).status_code, 200)
+        self.client.post(reverse('utilisateur:logout'))
+        reponse = self.client.get(reverse('utilisateur:dashboard'))
+        self.assertRedirects(reponse, reverse('utilisateur:login') + '?next=' + reverse('utilisateur:dashboard'))
+
+    @unittest.skipUnless(apps.is_installed('Compte_App'), 'Compte_App des amis absente')
+    def test_deconnexion_par_la_vue_des_amis(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('logout'))
+        self.assertEqual(self.client.get(reverse('utilisateur:profil')).status_code, 302)
+
+    def test_pages_de_connexion_non_mises_en_cache(self):
+        for nom in ['utilisateur:login', 'utilisateur:inscription']:
+            self.assertIn('no-store', self.client.get(reverse(nom))['Cache-Control'], nom)
+
+    def test_script_de_rechargement_present(self):
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get(reverse('utilisateur:dashboard')), 'evenement.persisted')

@@ -4,17 +4,11 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User, validate_gmail
 
 
-ROLES_CLIENT = [
-    ('USER', 'Client particulier'),
-    ('COMPANY', 'Client entreprise'),
-]
-
 NOUVEAU_MOT_DE_PASSE = {"autocomplete": "new-password"}
 SANS_AUTOCOMPLETION = {"autocomplete": "off"}
 
 ROLES_TOUS = [
-    ('USER', 'Client particulier'),
-    ('COMPANY', 'Client entreprise'),
+    ('USER', 'Client'),
     ('ADMIN', 'Administrateur'),
 ]
 
@@ -31,9 +25,6 @@ class InscriptionForm(forms.Form):
     email = forms.EmailField(label="Adresse e-mail", validators=[validate_gmail])
     first_name = forms.CharField(label="Prénom", max_length=150, required=False)
     last_name = forms.CharField(label="Nom", max_length=150, required=False)
-    role = forms.ChoiceField(label="Type de compte", choices=ROLES_CLIENT)
-    company_name = forms.CharField(label="Nom de l'entreprise", max_length=150, required=False)
-    company_description = forms.CharField(label="Description de l'entreprise", widget=forms.Textarea, required=False)
     password1 = forms.CharField(label="Mot de passe", widget=forms.PasswordInput(attrs=NOUVEAU_MOT_DE_PASSE))
     password2 = forms.CharField(label="Confirmation du mot de passe", widget=forms.PasswordInput(attrs=NOUVEAU_MOT_DE_PASSE))
 
@@ -62,9 +53,6 @@ class InscriptionForm(forms.Form):
             except forms.ValidationError as e:
                 self.add_error('password1', e)
 
-        if cleaned_data.get('role') == 'COMPANY' and not cleaned_data.get('company_name'):
-            self.add_error('company_name', "Le nom de l'entreprise est obligatoire pour un client entreprise.")
-
         return cleaned_data
 
 
@@ -72,8 +60,6 @@ class ProfilForm(forms.Form):
     first_name = forms.CharField(label="Prénom", max_length=150, required=False)
     last_name = forms.CharField(label="Nom", max_length=150, required=False)
     email = forms.EmailField(label="Adresse e-mail", validators=[validate_gmail])
-    company_name = forms.CharField(label="Nom de l'entreprise", max_length=150, required=False)
-    company_description = forms.CharField(label="Description de l'entreprise", widget=forms.Textarea, required=False)
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -119,6 +105,7 @@ class MotDePasseForm(forms.Form):
 
 class UtilisateurCreateForm(InscriptionForm):
     role = forms.ChoiceField(label="Rôle", choices=ROLES_TOUS)
+    field_order = ['username', 'email', 'first_name', 'last_name', 'role', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
