@@ -1,0 +1,10 @@
+{% extends 'estimation/base.html' %}
+{% block content %}
+<h2>Supprimer l'estimation de « {{ objet.projet.nom }} » ?</h2>
+<p>Le coût, le délai et le résumé seront supprimés. Une nouvelle estimation pourra être générée depuis le chat de SmartProjects.</p>
+<form method="POST">
+  {% csrf_token %}
+  <button class="btn btn-danger">Oui, supprimer</button>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary">Annuler</a>
+</form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'estimation/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <h2 class="mb-3">Connexion administrateur</h2>
+    <form method="POST" class="card card-body">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn btn-primary">Se connecter</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

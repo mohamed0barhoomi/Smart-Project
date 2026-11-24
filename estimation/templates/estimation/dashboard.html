@@ -1,0 +1,91 @@
+{% extends 'estimation/base.html' %}
+{% block content %}
+
+<div class="row mb-4 g-3">
+  <div class="col-md-4">
+    <div class="card card-body text-center">
+      <h3>{{ nb_estimations }}</h3>Projets estimés
+      {% if nb_sans_estimation %}<small class="text-muted">{{ nb_sans_estimation }} sans estimation</small>{% endif %}
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-body text-center">
+      <h3>{{ cout_total|floatformat:"2g" }} DT</h3>Coût total estimé
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-body text-center">
+      <h3>{{ delai_moyen|floatformat:"-1" }} mois</h3>Délai moyen
+    </div>
+  </div>
+</div>
+
+<h3>Estimations</h3>
+<p class="text-muted">Les estimations sont générées par l'IA de SmartProjects (bouton « Générer » du chat).
+Ici, vous pouvez les consulter, les modifier ou les supprimer.</p>
+
+<div class="table-responsive">
+  <table class="table table-striped bg-white mt-2 align-middle">
+    <thead>
+      <tr>
+        <th>Projet</th>
+        <th>Résumé</th>
+        <th>Délai (mois)</th>
+        <th>Coût (DT)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in estimations %}
+      <tr>
+        <td><strong>{{ e.projet.nom }}</strong><br><small class="text-muted">{{ e.projet.proprietaire.username }}</small></td>
+        <td>{{ e.resume|default:"—"|truncatechars:120 }}</td>
+        <td>{{ e.delai|floatformat:"-1" }}</td>
+        <td>{{ e.cout|floatformat:"2g" }}</td>
+        <td class="d-flex gap-1">
+          <a href="{% url 'modifier_estimation' e.projet_id %}" class="btn btn-sm btn-warning">Modifier</a>
+          <form method="post" action="{% url 'supprimer_estimation' e.projet_id %}"
+                onsubmit="return confirm('Supprimer cette estimation ?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">Aucune estimation.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if estimations %}
+<div class="row mt-4 g-3">
+  <div class="col-md-6"><canvas id="graphCout"></canvas></div>
+  <div class="col-md-6"><canvas id="graphDelai"></canvas></div>
+</div>
+
+{{ labels|json_script:"data-labels" }}
+{{ couts|json_script:"data-couts" }}
+{{ delais|json_script:"data-delais" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  const labels = JSON.parse(document.getElementById('data-labels').textContent);
+  const couts  = JSON.parse(document.getElementById('data-couts').textContent);
+  const delais = JSON.parse(document.getElementById('data-delais').textContent);
+
+  new Chart(document.getElementById('graphCout'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ label: 'Coût (DT)', data: couts }] },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('graphDelai'), {
+    type: 'line',
+    data: { labels: labels, datasets: [{ label: 'Délai (mois)', data: delais }] },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+</script>
+{% endif %}
+
+{% endblock %}
