@@ -9,10 +9,14 @@ Partie « intelligente » de SmartProjects (volontairement simple).
    directement du PlantUML à l'IA : un JSON est plus fiable et plus facile à contrôler).
 """
 
+import re
+from decimal import Decimal, InvalidOperation
+
 from django.db import transaction
 
 from Besoin_App.models import Besoin
 from Diagramme_App.models import Diagramme
+from Estimation_App.models import Estimation
 
 from .groq_client import ErreurLLM, appeler_llm
 
@@ -44,11 +48,20 @@ produis UNIQUEMENT un objet JSON (sans texte autour) avec exactement cette struc
     "relations": [{"de": "ClasseA", "vers": "ClasseB",
                    "type": "association|heritage|composition|agregation",
                    "label": "texte court ou vide"}]
+  },
+  "estimation": {
+    "resume": "3 à 5 phrases qui résument le projet",
+    "cout": 12000,
+    "delai_mois": 4,
+    "hypotheses": "taille de l'équipe, fonctionnalités prises en compte..."
   }
 }
 
 Règles : 5 à 10 besoins fonctionnels, 3 à 6 non fonctionnels, 4 à 8 classes
 (OBLIGATOIRE : au moins 4 classes, reliées entre elles par au moins 3 relations).
+Pour "estimation" : "cout" est le coût de développement en dinars tunisiens (DT) et
+"delai_mois" la durée en mois ; ce sont des NOMBRES seuls (sans unité ni texte),
+réalistes pour une petite équipe en Tunisie et cohérents avec le nombre de besoins.
 Utilise EXACTEMENT les clés du modèle ci-dessus (en français : "nom", "attributs", "methodes", "de", "vers").
 Tout est en français, les noms de classes en PascalCase sans accents.
 Pour "heritage", "de" est la classe fille et "vers" la classe mère."""
@@ -106,6 +119,37 @@ def en_liste(valeur):
     if isinstance(valeur, list):
         return valeur
     return [valeur]
+
+
+def en_texte_long(valeur):
+    """Un texte, ou une liste de phrases mise en lignes."""
+    if isinstance(valeur, list):
+        return "\n".join(str(v) for v in valeur)
+    return str(valeur)
+
+
+def en_nombre(valeur, maximum):
+    """Convertit 12000, 12000.5, "12 000 DT" ou "4,5 mois" en Decimal positif.
+    Renvoie None si la valeur est absente, illisible, négative ou trop grande."""
+    if isinstance(valeur, bool):        # True/False sont aussi des int en Python
+        return None
+    if isinstance(valeur, (int, float)):
+        texte = str(valeur)
+    elif isinstance(valeur, str):
+        # "12 000,50 DT" -> "12000,50" -> "12000.50"
+        trouve = re.search(r"\d+(?:[.,]\d+)?", re.sub(r"\s", "", valeur))
+        if not trouve:
+            return None
+        texte = trouve.group().replace(",", ".")
+    else:
+        return None
+    try:
+        nombre = Decimal(texte)
+    except InvalidOperation:
+        return None
+    if not nombre.is_finite() or nombre < 0 or nombre >= maximum:
+        return None
+    return nombre
 
 
 def en_texte(element):
@@ -258,13 +302,16 @@ def generer_analyse(projet):
         except ErreurLLM:
             pass   # on garde la première réponse
 
-    nb_final = enregistrer_analyse(projet, donnees)
-    avertissement = ""
+    nb_final, estimation_ok = enregistrer_analyse(projet, donnees)
+    avertissements = []
     if nb_final < MIN_CLASSES:
-        avertissement = (f"Le diagramme de classes ne contient que {nb_final} classe(s). "
-                         "Précisez les données manipulées dans le chat puis régénérez, "
-                         "ou complétez le diagramme à la main.")
-    return modele, avertissement
+        avertissements.append(f"Le diagramme de classes ne contient que {nb_final} classe(s). "
+                              "Précisez les données manipulées dans le chat puis régénérez, "
+                              "ou complétez le diagramme à la main.")
+    if not estimation_ok:
+        avertissements.append("L'IA n'a pas donné de coût et de délai lisibles : "
+                              "l'estimation n'a pas été mise à jour. Régénérez pour réessayer.")
+    return modele, " ".join(avertissements)
 
 
 # transaction.atomic : toutes les écritures en base réussissent ensemble,
@@ -312,4 +359,27 @@ def enregistrer_analyse(projet, donnees):
         titre=f"Diagramme de classes — {projet.nom}",
         code_plantuml=code_classes,
     )
-    return nb_classes
+
+    # 4) Estimation : un projet en a une seule. update_or_create la crée la 1re fois,
+    #    puis la remplace à chaque nouvelle génération (même si l'utilisateur l'a modifiée).
+    estimation_ok = enregistrer_estimation(projet, lire(donnees, "estimation", defaut={}))
+    return nb_classes, estimation_ok
+
+
+def enregistrer_estimation(projet, e):
+    """Renvoie True si l'estimation a été enregistrée, False si le coût ou le délai manque."""
+    cout = en_nombre(lire(e, "cout", "cout_dt", "cost"), maximum=Decimal("10000000000"))
+    delai = en_nombre(lire(e, "delai_mois", "delai", "duree_mois"), maximum=Decimal("10000"))
+    if cout is None or delai is None:
+        return False   # on garde l'estimation précédente, s'il y en a une
+    Estimation.objects.update_or_create(
+        projet=projet,
+        defaults={
+            # en_texte_long : le modèle renvoie parfois une liste de phrases au lieu d'un texte
+            "resume": en_texte_long(lire(e, "resume", "summary", defaut="")),
+            "cout": cout.quantize(Decimal("0.01")),
+            "delai": delai.quantize(Decimal("0.1")),
+            "hypotheses": en_texte_long(lire(e, "hypotheses", defaut="")),
+        },
+    )
+    return True

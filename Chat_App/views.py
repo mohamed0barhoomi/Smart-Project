@@ -57,7 +57,7 @@ def generer(request, projet_pk):
 
     try:
         modele, avertissement = generer_analyse(projet)
-        messages.success(request, f"Besoins et diagrammes générés (modèle : {modele}).")
+        messages.success(request, f"Besoins, diagrammes et estimation générés (modèle : {modele}).")
         if avertissement:
             messages.warning(request, avertissement)
         return redirect("projet_detail", pk=projet.pk)

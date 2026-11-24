@@ -5,11 +5,12 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from AbonnementsApp.models import abonnement_en_cours, nb_abonnements_actifs, revenus_du_mois
+from Estimation_App.models import Estimation
 
 from .forms import (ConnexionForm, InscriptionForm, MotDePasseForm, ProfilForm,
                     ReinitialiserMotDePasseForm, UtilisateurCreateForm, UtilisateurUpdateForm)
@@ -104,10 +105,27 @@ MODULES_CLIENT = [
 ]
 
 
+def stats_estimations(nb_graphique=10):
+    """Totaux des estimations de tous les projets + données des 2 graphiques."""
+    totaux = Estimation.objects.aggregate(cout_total=Sum("cout"), delai_moyen=Avg("delai"))
+    # Les plus récentes pour les graphiques (dans l'ordre chronologique, de gauche à droite)
+    recentes = list(Estimation.objects.select_related("projet").order_by("-updated_at")[:nb_graphique])[::-1]
+    return {
+        "nb_estimations": Estimation.objects.count(),
+        "cout_total": totaux["cout_total"] or 0,
+        "delai_moyen": totaux["delai_moyen"] or 0,
+        # json_script (dans le template) transmet ces listes au JavaScript de Chart.js
+        "graph_labels": [e.projet.nom for e in recentes],
+        "graph_couts": [float(e.cout) for e in recentes],
+        "graph_delais": [float(e.delai) for e in recentes],
+    }
+
+
 @login_required
 def dashboard(request):
     if est_admin(request.user):
         return render(request, 'dashboard/admin.html', {
+            **stats_estimations(),
             "nb_total": User.objects.count(),
             "nb_particuliers": User.objects.filter(role='USER').count(),
             "nb_entreprises": User.objects.filter(role='COMPANY').count(),

@@ -1,0 +1,4 @@
+{% extends "partials/confirm_delete.html" %}
+{% block question %}Supprimer l'estimation de « {{ projet.nom }} » ?{% endblock %}
+{% block details %}Le coût, le délai et le résumé seront supprimés. Vous pourrez en générer une nouvelle depuis le chat.{% endblock %}
+{% block retour %}{% url 'estimation_detail' projet.pk %}{% endblock %}

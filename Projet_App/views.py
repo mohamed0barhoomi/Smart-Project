@@ -3,6 +3,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
+from Estimation_App.models import Estimation
+
 from .forms import ProjetForm
 from .models import Projet
 
@@ -48,6 +50,8 @@ class ProjetDetailView(MesProjetsMixin, DetailView):
         context["nb_messages"] = projet.messages.count()
         context["derniers_besoins"] = projet.besoins.all()[:5]
         context["diagrammes"] = projet.diagrammes.all()
+        # None si l'IA n'a pas encore produit d'estimation pour ce projet
+        context["estimation"] = Estimation.objects.filter(projet=projet).first()
         context["onglet"] = "apercu"
         return context
 

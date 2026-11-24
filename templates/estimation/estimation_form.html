@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Modifier l'estimation · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section="estimation" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Modifier l'estimation</h1>
+        <p>Ajustez le coût, le délai ou le résumé proposés par l'IA.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_fields.html" %}
+            <div class="form-actions">
+                <a href="{% url 'estimation_detail' projet.pk %}" class="btn">Annuler</a>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

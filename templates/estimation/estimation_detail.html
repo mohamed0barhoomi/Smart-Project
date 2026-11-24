@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Estimation · {{ projet.nom }}{% endblock %}
+
+{% block breadcrumb %}{% with section="estimation" %}{% include "partials/breadcrumb_projet.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Estimation</h1>
+        <p>Coût, délai et résumé du projet, proposés par l'IA à partir du chat.</p>
+    </div>
+    {% if estimation %}
+    <div class="actions">
+        <a href="{% url 'estimation_delete' projet.pk %}" class="btn">Supprimer</a>
+        <a href="{% url 'estimation_update' projet.pk %}" class="btn btn-primary">Modifier</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if estimation %}
+<div class="stats">
+    <div class="card stat">
+        {# floatformat:"2g" : 2 décimales et séparateur de milliers (12 500,00) #}
+        <div class="value">{{ estimation.cout|floatformat:"2g" }} DT</div><div class="label">Coût estimé</div>
+    </div>
+    <div class="card stat">
+        <div class="value">{{ estimation.delai|floatformat:"-1" }} mois</div><div class="label">Délai estimé</div>
+    </div>
+</div>
+
+<div class="card form-card" style="max-width: 760px;">
+    <div class="card-body">
+        <dl class="definition">
+            <dt>Résumé</dt>      <dd>{{ estimation.resume|default:"—"|linebreaksbr }}</dd>
+            <dt>Hypothèses</dt>  <dd>{{ estimation.hypotheses|default:"—"|linebreaksbr }}</dd>
+            <dt>Mis à jour</dt>  <dd class="mono small">{{ estimation.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+    </div>
+</div>
+<p class="muted small">Une nouvelle génération depuis le chat remplace cette estimation, y compris vos modifications.</p>
+{% else %}
+<div class="empty">
+    <h3>Pas encore d'estimation</h3>
+    <p>Décrivez votre projet dans le chat puis cliquez sur « Générer » :<br>l'IA proposera un coût, un délai et un résumé.</p>
+    <a href="{% url 'chat' projet.pk %}" class="btn btn-primary">Aller au chat</a>
+</div>
+{% endif %}
+{% endblock %}

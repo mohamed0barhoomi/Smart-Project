@@ -49,6 +49,45 @@
     </div>
 </div>
 
+{# ---- Estimations des projets (coût, délai) ---- #}
+<h2 class="section-title" style="margin-bottom: 12px;">Estimations des projets</h2>
+<div class="stats">
+    <div class="stat">
+        <span class="stat-icon">{% include "components/_icon.html" with name="layers" %}</span>
+        <div>
+            <div class="stat-label">Projets estimés</div>
+            <div class="stat-value">{{ nb_estimations }}</div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-warning">{% include "components/_icon.html" with name="trending" %}</span>
+        <div>
+            <div class="stat-label">Coût total estimé</div>
+            <div class="stat-value">{{ cout_total|floatformat:"2g" }} <span class="stat-unit">DT</span></div>
+        </div>
+    </div>
+    <div class="stat">
+        <span class="stat-icon is-company">{% include "components/_icon.html" with name="calendar" %}</span>
+        <div>
+            <div class="stat-label">Délai moyen</div>
+            <div class="stat-value">{{ delai_moyen|floatformat:"-1" }} <span class="stat-unit">mois</span></div>
+        </div>
+    </div>
+</div>
+
+{% if graph_labels %}
+<div class="grid-2" style="margin-bottom: 22px;">
+    <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Coût estimé par projet (DT)</h2></div>
+        <div class="panel-body"><canvas id="graphCout" height="220"></canvas></div>
+    </section>
+    <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Délai estimé par projet (mois)</h2></div>
+        <div class="panel-body"><canvas id="graphDelai" height="220"></canvas></div>
+    </section>
+</div>
+{% endif %}
+
 <div class="grid-2">
     <section class="panel">
         <div class="panel-head">
@@ -90,4 +129,36 @@
         </ul>
     </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if graph_labels %}
+{# json_script : passe les listes Python au JavaScript sans risque d'injection #}
+{{ graph_labels|json_script:"data-labels" }}
+{{ graph_couts|json_script:"data-couts" }}
+{{ graph_delais|json_script:"data-delais" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    (function () {
+        if (typeof Chart === "undefined") return;   // CDN indisponible : on n'affiche pas les graphiques
+        const lire = (id) => JSON.parse(document.getElementById(id).textContent);
+        const css = getComputedStyle(document.documentElement);
+        const vert = css.getPropertyValue("--accent").trim() || "#166534";
+        const ocre = css.getPropertyValue("--ochre").trim() || "#a8700f";
+        const labels = lire("data-labels");
+        const options = { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } };
+
+        new Chart(document.getElementById("graphCout"), {
+            type: "bar",
+            data: { labels: labels, datasets: [{ label: "Coût (DT)", data: lire("data-couts"), backgroundColor: vert }] },
+            options: options,
+        });
+        new Chart(document.getElementById("graphDelai"), {
+            type: "bar",
+            data: { labels: labels, datasets: [{ label: "Délai (mois)", data: lire("data-delais"), backgroundColor: ocre }] },
+            options: options,
+        });
+    })();
+</script>
+{% endif %}
 {% endblock %}

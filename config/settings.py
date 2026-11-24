@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "Chat_App",         # chat + génération IA
     "Besoin_App",       # CRUD des besoins fonctionnels / non fonctionnels
     "Diagramme_App",    # CRUD des diagrammes (cas d'utilisation, classes)
+    "Estimation_App",   # coût, délai et résumé du projet (générés par l'IA)
     "UtilisateursApp",  # utilisateur personnalisé (rôles), profil, tableau de bord
     "AbonnementsApp",   # plans, abonnements, paiements
 ]

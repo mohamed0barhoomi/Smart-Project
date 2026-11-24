@@ -51,6 +51,7 @@
             <a href="{% url 'diagramme_list' projet.pk %}" class="nav-link {% if onglet == 'diagrammes' %}active{% endif %}">
                 Diagrammes <span class="count">{{ projet.diagrammes.count }}</span>
             </a>
+            <a href="{% url 'estimation_detail' projet.pk %}" class="nav-link {% if onglet == 'estimation' %}active{% endif %}">Estimation</a>
         </nav>
         {% endif %}
 
