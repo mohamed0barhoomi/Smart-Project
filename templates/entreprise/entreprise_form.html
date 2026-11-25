@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier {{ object.nom }}{% else %}Ajouter une entreprise{% endif %}{% endblock %}
+
+{% block content %}
+<div class="ext">
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'entreprise:entreprise_list' %}">Entreprises</a><span class="sep">/</span>
+    {% if object %}
+        <a href="{% url 'entreprise:entreprise_detail' object.pk %}">{{ object.nom }}</a><span class="sep">/</span><span aria-current="page">Modifier</span>
+    {% else %}
+        <span aria-current="page">Ajouter</span>
+    {% endif %}
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>{% if object %}Modifier l'entreprise {{ object.nom }}{% else %}Ajouter une entreprise{% endif %}</h1>
+    </div>
+</div>
+
+<form method="post" class="panel" autocomplete="off" novalidate>
+    {% csrf_token %}
+    <div class="panel-body">
+        {% include "partials/form_fields_ext.html" %}
+    </div>
+    <div class="panel-foot">
+        <span class="spacer"></span>
+        <a href="{% if object %}{% url 'entreprise:entreprise_detail' object.pk %}{% else %}{% url 'entreprise:entreprise_list' %}{% endif %}" class="btn btn-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+</form>
+</div>
+{% endblock %}

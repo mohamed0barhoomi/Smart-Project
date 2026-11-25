@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ entreprise.nom }}{% endblock %}
+
+{% block content %}
+<div class="ext">
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'entreprise:entreprise_list' %}">Entreprises</a><span class="sep">/</span><span aria-current="page">{{ entreprise.nom }}</span>
+</nav>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Fiche entreprise</span>
+        <h1>{{ entreprise.nom }}</h1>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'entreprise:entreprise_delete' entreprise.pk %}" data-confirm-titre="Supprimer l'entreprise" data-confirm="Voulez-vous vraiment supprimer {{ entreprise.nom }} ? Cette action est définitive." class="btn btn-ghost is-danger">
+            {% include "components/_icon.html" with name="trash" %}Supprimer
+        </a>
+        <a href="{% url 'entreprise:entreprise_update' entreprise.pk %}" class="btn btn-primary">
+            {% include "components/_icon.html" with name="pencil" %}Modifier
+        </a>
+    </div>
+</div>
+
+<section class="panel">
+    <dl class="info-strip">
+        <div><dt>Secteur</dt><dd>{{ entreprise.secteur }}</dd></div>
+        <div><dt>Localisation</dt><dd>{{ entreprise.localisation }}</dd></div>
+        <div><dt>Opportunité</dt><dd><span class="badge">{{ entreprise.get_type_opportunite_display }}</span></dd></div>
+        <div><dt>Compétences</dt><dd>{% for c in entreprise.liste_competences %}<span class="badge">{{ c }}</span> {% empty %}—{% endfor %}</dd></div>
+        <div><dt>Site web</dt><dd>{% if entreprise.site_web %}<a href="{{ entreprise.site_web }}" target="_blank" rel="noopener">{{ entreprise.site_web }}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt>Ajoutée le</dt><dd>{{ entreprise.date_creation|date:"d/m/Y" }}</dd></div>
+        <div><dt>Description</dt><dd>{{ entreprise.description|default:"—" }}</dd></div>
+    </dl>
+</section>
+</div>
+{% endblock %}

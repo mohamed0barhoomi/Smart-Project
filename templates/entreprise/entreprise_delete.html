@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Supprimer {{ entreprise.nom }}{% endblock %}
+
+{% block content %}
+<div class="ext">
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <a href="{% url 'entreprise:entreprise_list' %}">Entreprises</a><span class="sep">/</span>
+    <a href="{% url 'entreprise:entreprise_detail' entreprise.pk %}">{{ entreprise.nom }}</a><span class="sep">/</span><span aria-current="page">Supprimer</span>
+</nav>
+
+<div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-modal">
+        <div class="modal-body">
+            <div class="modal-icon">{% include "components/_icon.html" with name="trash" %}</div>
+            <h2 id="titre-modal">Supprimer l'entreprise</h2>
+            <p class="muted">Voulez-vous vraiment supprimer <strong>{{ entreprise.nom }}</strong> ? Cette action est définitive.</p>
+        </div>
+        <form method="post" class="modal-foot">
+            {% csrf_token %}
+            <a href="{% url 'entreprise:entreprise_detail' entreprise.pk %}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}

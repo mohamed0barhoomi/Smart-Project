@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "Estimation_App",   # coût, délai et résumé du projet (générés par l'IA)
     "UtilisateursApp",  # utilisateur personnalisé (rôles), profil, tableau de bord
     "AbonnementsApp",   # plans, abonnements, paiements
+    "EntreprisesApp",
 ]
 
 MIDDLEWARE = [
