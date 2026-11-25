@@ -60,6 +60,7 @@
         <nav class="nav-section">
             <div class="nav-label">Gestion</div>
             <a href="{% url 'utilisateur:utilisateur_list' %}" class="nav-link {% if 'utilisateur_' in page %}active{% endif %}">Utilisateurs</a>
+            <a href="{% url 'entreprise:entreprise_list' %}" class="nav-link {% if 'entreprise_' in page %}active{% endif %}">Entreprises</a>
             <a href="{% url 'abonnement:plan_list' %}" class="nav-link {% if 'plan_' in page %}active{% endif %}">Plans d'abonnement</a>
             <a href="{% url 'abonnement:abonnement_list' %}" class="nav-link {% if 'abonnement_' in page %}active{% endif %}">Abonnements</a>
             <a href="{% url 'abonnement:paiement_list' %}" class="nav-link {% if page == 'paiement_list' %}active{% endif %}">Paiements</a>

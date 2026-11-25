@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Entreprises{% endblock %}
+
+{% block content %}
+<div class="ext">
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Gestion</span>
+        <h1>Entreprises</h1>
+        <p class="muted">{{ liste.paginator.count }} entreprise{{ liste.paginator.count|pluralize }} enregistrée{{ liste.paginator.count|pluralize }}.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'entreprise:entreprise_create' %}" class="btn btn-primary">
+            {% include "components/_icon.html" with name="plus" %}Ajouter une entreprise
+        </a>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Entreprise</th>
+                    <th>Secteur</th>
+                    <th>Localisation</th>
+                    <th>Opportunité</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in liste %}
+                <tr>
+                    <td><a href="{% url 'entreprise:entreprise_detail' e.pk %}"><strong>{{ e.nom }}</strong></a></td>
+                    <td>{{ e.secteur }}</td>
+                    <td>{{ e.localisation }}</td>
+                    <td><span class="badge">{{ e.get_type_opportunite_display }}</span></td>
+                    <td class="col-actions">
+                        <div class="row-actions">
+                            <a href="{% url 'entreprise:entreprise_detail' e.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Voir" aria-label="Voir {{ e.nom }}">{% include "components/_icon.html" with name="open" %}</a>
+                            <a href="{% url 'entreprise:entreprise_update' e.pk %}" class="btn btn-ghost btn-sm btn-icon" title="Modifier" aria-label="Modifier {{ e.nom }}">{% include "components/_icon.html" with name="pencil" %}</a>
+                            <a href="{% url 'entreprise:entreprise_delete' e.pk %}" data-confirm-titre="Supprimer l'entreprise" data-confirm="Voulez-vous vraiment supprimer {{ e.nom }} ? Cette action est définitive." class="btn btn-ghost btn-sm btn-icon is-danger" title="Supprimer" aria-label="Supprimer {{ e.nom }}">{% include "components/_icon.html" with name="trash" %}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-cell">
+                        <div class="empty-state">
+                            <div class="empty-icon">{% include "components/_icon.html" with name="building" %}</div>
+                            <h3>Aucune entreprise</h3>
+                            <p>Ajoutez une première entreprise pour commencer.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "partials/pagination.html" %}
+</section>
+</div>
+{% endblock %}

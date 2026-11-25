@@ -13,6 +13,7 @@ urlpatterns = [
     path("projets/<int:projet_pk>/estimation/", include("Estimation_App.urls")),
     # Abonnements : plans, souscription, paiements
     path("abonnements/", include("AbonnementsApp.urls")),
+    path("entreprises/", include("EntreprisesApp.urls")),
     # Utilisateurs : accueil, connexion, tableau de bord, profil (page d'accueil du site : "")
     path("", include("UtilisateursApp.urls")),
 ]
